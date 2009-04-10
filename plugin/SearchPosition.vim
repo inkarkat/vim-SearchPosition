@@ -23,9 +23,9 @@
 "   Lerner. 
 "
 " USAGE:
-" :[range]SearchPosition [<pattern>]
-"			Show position of the search results for <pattern> (or the
-"			current search pattern (@/) if <pattern> is omitted. All
+" :[range]SearchPosition [{pattern}]
+"			Show position of the search results for {pattern} (or the
+"			current search pattern (@/) if {pattern} is omitted. All
 "			lines in [range] (or entire buffer if omitted) are
 "			considered, and the number of matches in relation to the
 "			current cursor position is echoed to the command line. 
