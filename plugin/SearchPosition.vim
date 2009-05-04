@@ -85,7 +85,6 @@ function! s:GetMatchesCnt( range, pattern )
     redir => l:matches
     try
 	silent execute a:range . 's/' . escape(a:pattern, '/') . '//gn'
-	redir END
 	let l:matchesCnt = matchstr( l:matches, '\n\zs\d\+' )
     catch /^Vim\%((\a\+)\)\=:E486/ " Pattern not found
     finally
