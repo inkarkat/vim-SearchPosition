@@ -282,11 +282,11 @@ if ! hasmapto('<Plug>SearchPositionCurrentInRange', 'v')
     vmap <silent> <A-n> <Plug>SearchPositionCurrentInRange
 endif
 
-nnoremap <silent> <Plug>SearchPositionCwordInRange :SearchPosition <C-r><C-r><C-w><CR>
+nnoremap <silent> <Plug>SearchPositionCwordInRange :<C-u>call <SID>SearchPosition((v:count ? line('.') : 0), (v:count ? line('.') + v:count - 1 : 0), '\V' . escape(expand('<cword>'), '\'))<CR>
 if ! hasmapto('<Plug>SearchPositionCwordInRange', 'n')
     nmap <silent> <A-m> <Plug>SearchPositionCwordInRange
 endif
-vnoremap <silent> <Plug>SearchPositionCwordInRange :<C-u>let save_unnamedregister=@@<CR>gvy:SearchPosition <C-r><C-r>"<CR>:let @@=save_unnamedregister<Bar>unlet save_unnamedregister<CR>
+vnoremap <silent> <Plug>SearchPositionCwordInRange :<C-u>let save_unnamedregister=@@<CR>gvy: call <SID>SearchPosition(0, 0, '\V' . escape(@@, '\'))<CR>:let @@=save_unnamedregister<Bar>unlet save_unnamedregister<CR>
 if ! hasmapto('<Plug>SearchPositionCwordInRange', 'v')
     vmap <silent> <A-m> <Plug>SearchPositionCwordInRange
 endif
