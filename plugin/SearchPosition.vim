@@ -71,6 +71,8 @@
 "				A literal pattern (like <cword>) is now
 "				converted to a regexp internally and included in
 "				the report in its original, unmodified form. 
+"				BF: Translating line breaks in search pattern
+"				into ^M / ^@ to avoid messed up report message. 
 "	003	05-May-2009	BF: Must ':redir END' before evaluating captured
 "				output from variable. 
 "	002	10-Aug-2008	Decided on default mappings. 
@@ -179,6 +181,12 @@ function! s:Report( line1, line2, pattern, isLiteral, evaluation )
     let l:pattern = ''
     if g:SearchPosition_ShowPattern
 	let l:pattern = (a:isLiteral ? a:pattern : '/' . (empty(a:pattern) ? @/ : escape(a:pattern, '/')) . '/')
+
+	" For the :echo, strtrans() is not necessary; unprintable characters are
+	" automatically translated (and shown in a different highlighting, an
+	" advantage over using strtrans()). However, embedded line breaks mess
+	" up the report message, so we're replacing them with ^M / ^@. 
+	let l:pattern = substitute(l:pattern, "[\<CR>\n]", '\=strtrans(submatch(0))', 'g')
     endif
 
     redraw  " This is necessary because of the :redir done earlier. 
@@ -200,6 +208,22 @@ function! s:SearchPosition( line1, line2, pattern, isLiteral )
     " not affected by this. 
     let l:endLine = (foldclosed(l:endLine) == -1 ? l:endLine : foldclosedend(l:endLine))
 "****D echomsg '****' l:startLine l:endLine
+
+    " Skip processing if there is no pattern. 
+    if empty(a:pattern) && (a:isLiteral || empty(@/))
+	" This check is necessary not just to better inform the user, but also
+	" because the two methods to tally overall and matches in the current
+	" line react different to an empty literal pattern (/\V/): %s/\V//gn
+	" matches every character and once for an empty line, but search('\V')
+	" does not move the cursor and does not match in an empty line. 
+	" This discrepance caused this to report being "in this fold" when
+	" executed with a literal empty pattern on an empty line. 
+	echohl ErrorMsg
+	let v:errmsg = (a:isLiteral ? 'Nothing selected' : 'E35: No previous regular expression')
+	echomsg v:errmsg
+	echohl None
+	return
+    endif
 
     let l:pattern = (a:isLiteral ? '\V' . escape(a:pattern, '\') : a:pattern)
 
