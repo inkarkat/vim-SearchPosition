@@ -50,12 +50,14 @@
 " KNOWN PROBLEMS:
 " TODO:
 "
-" Copyright: (C) 2008 by Ingo Karkat
+" Copyright: (C) 2008-2009 by Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'. 
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS 
+"	003	05-May-2009	BF: Must ':redir END' before evaluating captured
+"				output from variable. 
 "	002	10-Aug-2008	Decided on default mappings. 
 "				Correcting wrong "1 matches" grammar. 
 "	001	07-Aug-2008	file creation
@@ -85,6 +87,7 @@ function! s:GetMatchesCnt( range, pattern )
     redir => l:matches
     try
 	silent execute a:range . 's/' . escape(a:pattern, '/') . '//gn'
+	redir END
 	let l:matchesCnt = matchstr( l:matches, '\n\zs\d\+' )
     catch /^Vim\%((\a\+)\)\=:E486/ " Pattern not found
     finally
@@ -173,7 +176,7 @@ function! s:Report( line1, line2, pattern, evaluation )
 	echon EchoWithoutScrolling#Truncate( ' for ' . l:pattern, (strlen(l:range) + strlen(a:evaluation)) )
     endif
 endfunction
-function! s:SearchPosition( line1, line2, pattern)
+function! s:SearchPosition( line1, line2, pattern )
     let l:startLine = (a:line1 ? a:line1 : 1)
     let l:endLine = (a:line2 ? a:line2 : line('$'))
     " If the end of range is in a closed fold, VIM processes all lines inside
