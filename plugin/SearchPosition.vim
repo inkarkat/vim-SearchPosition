@@ -1,65 +1,8 @@
-" SearchPosition.vim: Show where we are in relation to search pattern matches in
-" range or buffer. 
+" SearchPosition.vim: Show relation to search pattern matches in range or buffer. 
 "
-" DESCRIPTION:
-"   The mappings, command and operator provided by this plugin search a range or
-"   the entire buffer for a (or the current search) pattern, and print a summary
-"   of the number of occurrences above, below and on the current line. This
-"   provides better orientation in a buffer without having to first jump from
-"   search result to search result. 
-"
-"   In its simplest implementation
-"	:nnoremap <A-n> :%s///gn<CR>
-"	41 matches on 17 lines
-"   prints the number of matches for the current search pattern. This plugin
-"   builds on top of this, and prints information like:
-"	On sole match in this line, 40 in following lines for /let/
-"	3 matches before and 39 after this line; total 42 for /let/
-"	:144,172 7 matches in this fold for /let/
-"	4 matches before and 2 after cursor in this line; 30 and 19 overall;
-"	total 49 for /let/
-"
-"   This plugin is similar to IndexedSearch.vim (vimscript#1682) by Yakov
-"   Lerner. 
-"
-" USAGE:
-" :[range]SearchPosition [{pattern}]
-"			Show position of the search results for {pattern} (or the
-"			current search pattern (@/) if {pattern} is omitted. All
-"			lines in [range] (or entire buffer if omitted) are
-"			considered, and the number of matches in relation to the
-"			current cursor position is echoed to the command line. 
-"
-" <Leader><A-n>{motion}	Show position for the current search pattern in the
-"			lines covered by {motion}. 
-" [count]<A-n>		Show position for the current search pattern in the
-"			entire buffer, or [count] following lines. 
-" {Visual}<A-n>		Show position for the current search pattern in the
-"			selected lines. 
-"
-"			The default mapping <A-n> was chosen because one often
-"			invokes this when jumping to matches via n/N, so <A-n>
-"			is easy to reach. Imagine 'n' stood for "next searches". 
-"
-" [count]<A-m>		Show position for the word under the cursor in the
-"			entire buffer, or [count] following lines. 
-"			Reuses the last used <cword> when on a blank line. 
-" {Visual}<A-m>		Show position for the selected text in the entire
-"			buffer. 
-"
-"			Imagine 'm' stood for "more occurrences". 
-"
-" INSTALLATION:
 " DEPENDENCIES:
 "   - EchoWithoutScrolling.vim autoload script (optional, only for showing
 "     pattern). 
-"
-" CONFIGURATION:
-" INTEGRATION:
-" LIMITATIONS:
-" ASSUMPTIONS:
-" KNOWN PROBLEMS:
-" TODO:
 "
 " Copyright: (C) 2008-2009 by Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'. 
@@ -67,12 +10,13 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS 
-"	004	15-May-2009	Added mappings for <cword> / selected word. 
+"   1.00.004	15-May-2009	Added mappings for <cword> / selected word. 
 "				A literal pattern (like <cword>) is now
 "				converted to a regexp internally and included in
 "				the report in its original, unmodified form. 
 "				BF: Translating line breaks in search pattern
 "				into ^M / ^@ to avoid messed up report message. 
+"				Split off documentation. 
 "	003	05-May-2009	BF: Must ':redir END' before evaluating captured
 "				output from variable. 
 "	002	10-Aug-2008	Decided on default mappings. 
@@ -284,14 +228,6 @@ function! s:SearchPosition( line1, line2, pattern, isLiteral )
     call s:Report( l:startLine, l:endLine, a:pattern, a:isLiteral, s:Evaluate( [l:matchesBefore, l:matchesCurrent, l:matchesAfter, l:before, l:exact, l:after] ) )
 endfunction
 
-let s:pattern = ''
-function! s:SetPattern( pattern )
-    if ! empty(a:pattern)
-	let s:pattern = a:pattern
-    endif
-    return s:pattern
-endfunction
-
 "- commands and mappings ------------------------------------------------------
 command! -range=% -nargs=? SearchPosition call <SID>SearchPosition(<line1>, <line2>, <q-args>, 0)
 
@@ -310,22 +246,29 @@ if ! hasmapto('<Plug>SearchPositionOperator', 'n')
 endif
 
 
-nnoremap <silent> <Plug>SearchPositionCurrentInRange :SearchPosition<CR>
-if ! hasmapto('<Plug>SearchPositionCurrentInRange', 'n')
-    nmap <silent> <A-n> <Plug>SearchPositionCurrentInRange
+nnoremap <silent> <Plug>SearchPositionCurrent :SearchPosition<CR>
+if ! hasmapto('<Plug>SearchPositionCurrent', 'n')
+    nmap <silent> <A-n> <Plug>SearchPositionCurrent
 endif
-vnoremap <silent> <Plug>SearchPositionCurrentInRange :SearchPosition<CR>
-if ! hasmapto('<Plug>SearchPositionCurrentInRange', 'v')
-    vmap <silent> <A-n> <Plug>SearchPositionCurrentInRange
+vnoremap <silent> <Plug>SearchPositionCurrent :SearchPosition<CR>
+if ! hasmapto('<Plug>SearchPositionCurrent', 'v')
+    vmap <silent> <A-n> <Plug>SearchPositionCurrent
 endif
 
-nnoremap <silent> <Plug>SearchPositionCwordInRange :<C-u>call <SID>SearchPosition((v:count ? line('.') : 0), (v:count ? line('.') + v:count - 1 : 0), <SID>SetPattern(expand('<cword>')), 1)<CR>
-if ! hasmapto('<Plug>SearchPositionCwordInRange', 'n')
-    nmap <silent> <A-m> <Plug>SearchPositionCwordInRange
+let s:pattern = ''
+function! s:SetPattern( pattern )
+    if ! empty(a:pattern)
+	let s:pattern = a:pattern
+    endif
+    return s:pattern
+endfunction
+nnoremap <silent> <Plug>SearchPositionCword :<C-u>call <SID>SearchPosition((v:count ? line('.') : 0), (v:count ? line('.') + v:count - 1 : 0), <SID>SetPattern(expand('<cword>')), 1)<CR>
+if ! hasmapto('<Plug>SearchPositionCword', 'n')
+    nmap <silent> <A-m> <Plug>SearchPositionCword
 endif
-vnoremap <silent> <Plug>SearchPositionCwordInRange :<C-u>let save_unnamedregister=@@<CR>gvy: call <SID>SearchPosition(0, 0, @@, 1)<CR>:let @@=save_unnamedregister<Bar>unlet save_unnamedregister<CR>
-if ! hasmapto('<Plug>SearchPositionCwordInRange', 'v')
-    vmap <silent> <A-m> <Plug>SearchPositionCwordInRange
+vnoremap <silent> <Plug>SearchPositionCword :<C-u>let save_unnamedregister=@@<CR>gvy: call <SID>SearchPosition(0, 0, @@, 1)<CR>:let @@=save_unnamedregister<Bar>unlet save_unnamedregister<CR>
+if ! hasmapto('<Plug>SearchPositionCword', 'v')
+    vmap <silent> <A-m> <Plug>SearchPositionCword
 endif
 
 " vim: set sts=4 sw=4 noexpandtab ff=unix fdm=syntax :
