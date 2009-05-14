@@ -43,6 +43,7 @@
 "
 " [count]<A-m>		Show position for the word under the cursor in the
 "			entire buffer, or [count] following lines. 
+"			Reuses the last used <cword> when on a blank line. 
 " {Visual}<A-m>		Show position for the selected text in the entire
 "			buffer. 
 "
@@ -67,6 +68,9 @@
 "
 " REVISION	DATE		REMARKS 
 "	004	15-May-2009	Added mappings for <cword> / selected word. 
+"				A literal pattern (like <cword>) is now
+"				converted to a regexp internally and included in
+"				the report in its original, unmodified form. 
 "	003	05-May-2009	BF: Must ':redir END' before evaluating captured
 "				output from variable. 
 "	002	10-Aug-2008	Decided on default mappings. 
@@ -159,7 +163,7 @@ function! s:Evaluate( matchResults )
     let l:evaluation = substitute( l:evaluation, '{\%(\d\|+\)\+}', '\=s:ResolveParameters(a:matchResults, submatch(0))', 'g' )
     return substitute( l:evaluation, '1 matches' , '1 match', 'g' )
 endfunction
-function! s:Report( line1, line2, pattern, evaluation )
+function! s:Report( line1, line2, pattern, isLiteral, evaluation )
     let l:range = ''
     if g:SearchPosition_ShowRange
 	let l:range = a:line1 . ',' . a:line2
@@ -174,7 +178,7 @@ function! s:Report( line1, line2, pattern, evaluation )
     endif
     let l:pattern = ''
     if g:SearchPosition_ShowPattern
-	let l:pattern = '/' . (empty(a:pattern) ? @/ : escape(a:pattern, '/')) . '/'
+	let l:pattern = (a:isLiteral ? a:pattern : '/' . (empty(a:pattern) ? @/ : escape(a:pattern, '/')) . '/')
     endif
 
     redraw  " This is necessary because of the :redir done earlier. 
@@ -187,15 +191,17 @@ function! s:Report( line1, line2, pattern, evaluation )
 	echon EchoWithoutScrolling#Truncate( ' for ' . l:pattern, (strlen(l:range) + strlen(a:evaluation)) )
     endif
 endfunction
-function! s:SearchPosition( line1, line2, pattern )
-    let l:startLine = (a:line1 ? a:line1 : 1)
-    let l:endLine = (a:line2 ? a:line2 : line('$'))
+function! s:SearchPosition( line1, line2, pattern, isLiteral )
+    let l:startLine = (a:line1 ? max([a:line1, 1]) : 1)
+    let l:endLine = (a:line2 ? min([a:line2, line('$')]) : line('$'))
     " If the end of range is in a closed fold, VIM processes all lines inside
     " the fold, even when '.' or a fixed line number has been specified. We
     " correct the end line merely for output cosmetics, as the calculation is
     " not affected by this. 
     let l:endLine = (foldclosed(l:endLine) == -1 ? l:endLine : foldclosedend(l:endLine))
 "****D echomsg '****' l:startLine l:endLine
+
+    let l:pattern = (a:isLiteral ? '\V' . escape(a:pattern, '\') : a:pattern)
 
     let l:save_cursor = getpos('.')
     let l:cursorLine = line('.')
@@ -210,16 +216,16 @@ function! s:SearchPosition( line1, line2, pattern )
 
     let l:lineBeforeCurrent = (l:isOnClosedFold ? foldclosed(l:cursorLine) : l:cursorLine) - 1
     if l:lineBeforeCurrent >= l:startLine
-	let l:matchesBefore = s:GetMatchesCnt( l:startLine . ',' . l:lineBeforeCurrent, a:pattern )
+	let l:matchesBefore = s:GetMatchesCnt( l:startLine . ',' . l:lineBeforeCurrent, l:pattern )
     endif
 
     " The range '.' represents either the current line or the entire current
     " closed fold. 
-    let l:matchesCurrent = s:GetMatchesCnt('.', a:pattern)
+    let l:matchesCurrent = s:GetMatchesCnt('.', l:pattern)
 
     let l:lineAfterCurrent = (l:isOnClosedFold ? foldclosedend(l:cursorLine) : l:cursorLine) + 1
     if l:lineAfterCurrent <= l:endLine
-	let l:matchesAfter = s:GetMatchesCnt( l:lineAfterCurrent . ',' . l:endLine, a:pattern )
+	let l:matchesAfter = s:GetMatchesCnt( l:lineAfterCurrent . ',' . l:endLine, l:pattern )
     endif
 "****D echomsg '****' l:matchesBefore '/' l:matchesCurrent '/' l:matchesAfter
 
@@ -235,7 +241,7 @@ function! s:SearchPosition( line1, line2, pattern )
 	call cursor(l:cursorLine, 1)
 	" This triple records matches only in the current line (not current fold!),
 	" split into before, on, and after cursor position. 
-	while search( a:pattern, (l:before + l:exact + l:after ? '' : 'c'), l:cursorLine )
+	while search( l:pattern, (l:before + l:exact + l:after ? '' : 'c'), l:cursorLine )
 	    let l:matchVirtCol = virtcol('.')
 	    if l:matchVirtCol < l:cursorVirtCol
 		let l:before += 1
@@ -251,12 +257,19 @@ function! s:SearchPosition( line1, line2, pattern )
 "****D echomsg '****' l:before '/' l:exact '/' l:after
     endif
 
-    call s:Report( l:startLine, l:endLine, a:pattern, s:Evaluate( [l:matchesBefore, l:matchesCurrent, l:matchesAfter, l:before, l:exact, l:after] ) )
+    call s:Report( l:startLine, l:endLine, a:pattern, a:isLiteral, s:Evaluate( [l:matchesBefore, l:matchesCurrent, l:matchesAfter, l:before, l:exact, l:after] ) )
 endfunction
 
+let s:pattern = ''
+function! s:SetPattern( pattern )
+    if ! empty(a:pattern)
+	let s:pattern = a:pattern
+    endif
+    return s:pattern
+endfunction
 
 "- commands and mappings ------------------------------------------------------
-command! -range=% -nargs=? SearchPosition call <SID>SearchPosition(<line1>, <line2>, <q-args>)
+command! -range=% -nargs=? SearchPosition call <SID>SearchPosition(<line1>, <line2>, <q-args>, 0)
 
 
 function! s:SearchPositionOperator( type )
@@ -265,7 +278,7 @@ function! s:SearchPositionOperator( type )
     " this report-only command this is not desired, so we use a mark to pin the
     " cursor down. 
     normal! `z
-    call s:SearchPosition(line("'["), line("']"), '')
+    call s:SearchPosition(line("'["), line("']"), '', 0)
 endfunction
 nnoremap <Plug>SearchPositionOperator mz:set opfunc=<SID>SearchPositionOperator<CR>g@
 if ! hasmapto('<Plug>SearchPositionOperator', 'n')
@@ -282,11 +295,11 @@ if ! hasmapto('<Plug>SearchPositionCurrentInRange', 'v')
     vmap <silent> <A-n> <Plug>SearchPositionCurrentInRange
 endif
 
-nnoremap <silent> <Plug>SearchPositionCwordInRange :<C-u>call <SID>SearchPosition((v:count ? line('.') : 0), (v:count ? line('.') + v:count - 1 : 0), '\V' . escape(expand('<cword>'), '\'))<CR>
+nnoremap <silent> <Plug>SearchPositionCwordInRange :<C-u>call <SID>SearchPosition((v:count ? line('.') : 0), (v:count ? line('.') + v:count - 1 : 0), <SID>SetPattern(expand('<cword>')), 1)<CR>
 if ! hasmapto('<Plug>SearchPositionCwordInRange', 'n')
     nmap <silent> <A-m> <Plug>SearchPositionCwordInRange
 endif
-vnoremap <silent> <Plug>SearchPositionCwordInRange :<C-u>let save_unnamedregister=@@<CR>gvy: call <SID>SearchPosition(0, 0, '\V' . escape(@@, '\'))<CR>:let @@=save_unnamedregister<Bar>unlet save_unnamedregister<CR>
+vnoremap <silent> <Plug>SearchPositionCwordInRange :<C-u>let save_unnamedregister=@@<CR>gvy: call <SID>SearchPosition(0, 0, @@, 1)<CR>:let @@=save_unnamedregister<Bar>unlet save_unnamedregister<CR>
 if ! hasmapto('<Plug>SearchPositionCwordInRange', 'v')
     vmap <silent> <A-m> <Plug>SearchPositionCwordInRange
 endif
