@@ -29,14 +29,24 @@
 "			lines in [range] (or entire buffer if omitted) are
 "			considered, and the number of matches in relation to the
 "			current cursor position is echoed to the command line. 
-" Note: The default mapping <A-n> was chosen because one often invokes this when
-"	jumping to matches via n/N, so <A-n> is easy to reach. 
+"
 " <Leader><A-n>{motion}	Show position for the current search pattern in the
 "			lines covered by {motion}. 
 " [count]<A-n>		Show position for the current search pattern in the
 "			entire buffer, or [count] following lines. 
 " {Visual}<A-n>		Show position for the current search pattern in the
 "			selected lines. 
+"
+"			The default mapping <A-n> was chosen because one often
+"			invokes this when jumping to matches via n/N, so <A-n>
+"			is easy to reach. Imagine 'n' stood for "next searches". 
+"
+" [count]<A-m>		Show position for the word under the cursor in the
+"			entire buffer, or [count] following lines. 
+" {Visual}<A-m>		Show position for the selected text in the entire
+"			buffer. 
+"
+"			Imagine 'm' stood for "more occurrences". 
 "
 " INSTALLATION:
 " DEPENDENCIES:
@@ -56,6 +66,7 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS 
+"	004	15-May-2009	Added mappings for <cword> / selected word. 
 "	003	05-May-2009	BF: Must ':redir END' before evaluating captured
 "				output from variable. 
 "	002	10-Aug-2008	Decided on default mappings. 
@@ -262,13 +273,22 @@ if ! hasmapto('<Plug>SearchPositionOperator', 'n')
 endif
 
 
-nnoremap <silent> <Plug>SearchPositionRange :SearchPosition<CR>
-if ! hasmapto('<Plug>SearchPositionRange', 'n')
-    nmap <silent> <A-n> <Plug>SearchPositionRange
+nnoremap <silent> <Plug>SearchPositionCurrentInRange :SearchPosition<CR>
+if ! hasmapto('<Plug>SearchPositionCurrentInRange', 'n')
+    nmap <silent> <A-n> <Plug>SearchPositionCurrentInRange
 endif
-vnoremap <silent> <Plug>SearchPositionRange :SearchPosition<CR>
-if ! hasmapto('<Plug>SearchPositionRange', 'v')
-    vmap <silent> <A-n> <Plug>SearchPositionRange
+vnoremap <silent> <Plug>SearchPositionCurrentInRange :SearchPosition<CR>
+if ! hasmapto('<Plug>SearchPositionCurrentInRange', 'v')
+    vmap <silent> <A-n> <Plug>SearchPositionCurrentInRange
+endif
+
+nnoremap <silent> <Plug>SearchPositionCwordInRange :SearchPosition <C-r><C-r><C-w><CR>
+if ! hasmapto('<Plug>SearchPositionCwordInRange', 'n')
+    nmap <silent> <A-m> <Plug>SearchPositionCwordInRange
+endif
+vnoremap <silent> <Plug>SearchPositionCwordInRange :<C-u>let save_unnamedregister=@@<CR>gvy:SearchPosition <C-r><C-r>"<CR>:let @@=save_unnamedregister<Bar>unlet save_unnamedregister<CR>
+if ! hasmapto('<Plug>SearchPositionCwordInRange', 'v')
+    vmap <silent> <A-m> <Plug>SearchPositionCwordInRange
 endif
 
 " vim: set sts=4 sw=4 noexpandtab ff=unix fdm=syntax :
