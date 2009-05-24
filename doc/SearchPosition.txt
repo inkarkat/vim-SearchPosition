@@ -1,0 +1,130 @@
+*SearchPosition.txt*    Show relation to search pattern matches in range or buffer. 
+
+		      SEARCH POSITION    by Ingo Karkat
+							  *SearchPosition.vim*
+description			|SearchPosition-description|
+usage	    			|SearchPosition-usage|
+installation   			|SearchPosition-installation|
+configuration  			|SearchPosition-configuration|
+known problems			|SearchPosition-known-problems|
+todo				|SearchPosition-todo|
+history				|SearchPosition-history|
+
+==============================================================================
+DESCRIPTION					  *SearchPosition-description*
+
+The mappings, command and operator provided by this plugin search a range or
+the entire buffer for a pattern (defaulting to the current search pattern),
+and print a summary of the number of occurrences above, below and on the
+current line, e.g.: 
+    1 match after cursor in this line, 8 following, 2 in previous lines; ~
+	total 10 for /\<SearchPosition\>/ ~
+    5 matches in this fold, 9 before, 6 following; total 21 for /endif/ ~
+    On sole match in this line, 40 in following lines for /let/ ~
+    :144,172 7 matches in this fold for /let/ ~
+
+This provides better orientation in a buffer without having to first jump from
+search result to search result. 
+
+MOTIVATION					   *SearchPosition-motivation*
+
+In its simplest implementation >
+    :nnoremap <A-n> :%s///gn<CR>
+<   41 matches on 17 lines ~
+prints the number of matches for the current search pattern. This plugin
+builds on top of this by providing more context with regards to the current
+cursor position plus additional information. 
+
+This plugin is similar to IndexedSearch.vim (vimscript#1682) by Yakov
+Lerner. 
+
+==============================================================================
+USAGE							*SearchPosition-usage*
+							     *:SearchPosition*
+:[range]SearchPosition [{pattern}]
+			Show position of the search results for {pattern} (or
+			the current search pattern (@/) if {pattern} is
+			omitted). All lines in [range] (or the entire buffer
+			if omitted) are considered, and the number of matches
+			in relation to the current cursor position is echoed
+			to the command line. 
+							     *ALT-N* *v_ALT-N*
+<Leader><A-n>{motion}	Show position for the current search pattern in the
+			lines covered by {motion}. 
+[count]<A-n>		Show position for the current search pattern in the
+			entire buffer, or [count] following lines. 
+{Visual}<A-n>		Show position for the current search pattern in the
+			selected lines. 
+
+			The default mapping <A-n> was chosen because one often
+			invokes this when jumping to matches via n/N, so <A-n>
+			is easy to reach. Imagine 'n' stood for "next
+			searches". 
+							     *ALT-M* *v_ALT-M*
+[count]<A-m>		Show position for the word under the cursor in the
+			entire buffer, or [count] following lines. 
+			Reuses the last used <cword> when on a blank line. 
+{Visual}<A-m>		Show position for the selected text in the entire
+			buffer. 
+
+			Imagine 'm' stood for "more occurrences". 
+
+==============================================================================
+INSTALLATION					 *SearchPosition-installation*
+
+This script is packaged as a|vimball|. If you have the "gunzip" decompressor
+in your PATH, simply edit the *.vba.gz package in Vim; otherwise, decompress
+the archive first, e.g. using WinZip. Inside Vim, install by sourcing the
+vimball or via the|:UseVimball|command. >
+    vim SearchPosition.vba.gz
+    :so %
+To uninstall, use the|:RmVimball|command. 
+
+DEPENDENCIES					 *SearchPosition-dependencies*
+
+- Requires Vim 7.0 or higher. 
+
+==============================================================================
+CONFIGURATION					*SearchPosition-configuration*
+
+If you want to use different mappings, map your keys to the
+<Plug>SearchPosition* mapping targets _before_ sourcing this script (e.g. in
+your|vimrc|): >
+    nmap <silent> <Leader>,n <Plug>SearchPositionOperator
+    nmap <silent> <Leader>n <Plug>SearchPositionCurrent
+    vmap <silent> <Leader>n <Plug>SearchPositionCurrent
+    nmap <silent> <Leader>m <Plug>SearchPositionCword
+    vmap <silent> <Leader>m <Plug>SearchPositionCword
+
+
+The highlight group for the report message can be set via >
+    let g:SearchPosition_HighlightGroup = 'ModeMsg'
+<
+To shorten the report message, the [range] and used search pattern can be
+omitted from the message; by default, both are included in the message text: >
+    let g:SearchPosition_ShowRange = 1
+    let g:SearchPosition_ShowPattern = 1
+<
+==============================================================================
+KNOWN PROBLEMS				       *SearchPosition-known-problems*
+
+TODO							 *SearchPosition-todo*
+
+IDEAS							*SearchPosition-ideas*
+
+==============================================================================
+HISTORY						      *SearchPosition-history*
+
+1.00	15-May-2009
+First published version. 
+
+0.01	07-Aug-2008
+Started development. 
+
+==============================================================================
+Copyright: (C) 2009 by Ingo Karkat
+The VIM LICENSE applies to this script; see|copyright|. 
+
+Maintainer:	Ingo Karkat <ingo@karkat.de>
+==============================================================================
+ vim:tw=78:ts=8:ft=help:norl:
