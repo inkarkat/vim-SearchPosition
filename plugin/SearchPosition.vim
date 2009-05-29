@@ -15,7 +15,8 @@
 "				converted to a regexp internally and included in
 "				the report in its original, unmodified form. 
 "				BF: Translating line breaks in search pattern
-"				into ^M / ^@ to avoid messed up report message. 
+"				via EchoWithoutScrolling#TranslateLineBreaks()
+"				to avoid messed up report message. 
 "				Split off documentation. 
 "	003	05-May-2009	BF: Must ':redir END' before evaluating captured
 "				output from variable. 
@@ -124,13 +125,7 @@ function! s:Report( line1, line2, pattern, isLiteral, evaluation )
     endif
     let l:pattern = ''
     if g:SearchPosition_ShowPattern
-	let l:pattern = (a:isLiteral ? a:pattern : '/' . (empty(a:pattern) ? @/ : escape(a:pattern, '/')) . '/')
-
-	" For the :echo, strtrans() is not necessary; unprintable characters are
-	" automatically translated (and shown in a different highlighting, an
-	" advantage over using strtrans()). However, embedded line breaks mess
-	" up the report message, so we're replacing them with ^M / ^@. 
-	let l:pattern = substitute(l:pattern, "[\<CR>\n]", '\=strtrans(submatch(0))', 'g')
+	let l:pattern = EchoWithoutScrolling#TranslateLineBreaks(a:isLiteral ? a:pattern : '/' . (empty(a:pattern) ? @/ : escape(a:pattern, '/')) . '/')
     endif
 
     redraw  " This is necessary because of the :redir done earlier. 
