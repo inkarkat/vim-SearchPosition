@@ -135,6 +135,10 @@ function! s:Report( line1, line2, pattern, isLiteral, evaluation )
     echohl None
 
     if ! empty(l:pattern)
+	" Assumption: The evaluation message only contains printable ASCII
+	" characters; we can thus simple use strlen() to determine the number of
+	" occupied virtual columns. Otherwise,
+	" EchoWithoutScrolling#DetermineVirtColNum() could be used. 
 	echon EchoWithoutScrolling#Truncate( ' for ' . l:pattern, (strlen(l:range) + strlen(a:evaluation)) )
     endif
 endfunction
