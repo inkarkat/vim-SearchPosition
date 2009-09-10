@@ -10,7 +10,10 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS 
-"   1.00.005	18-Jun-2009	Replaced temporary mark z with mark " and using
+"   1.01.006	19-Jun-2009	Using :keepjumps to avoid that the :substitute
+"				command in s:GetMatchesCnt() clobbers the
+"				jumplist. 
+"   1.01.005	18-Jun-2009	Replaced temporary mark z with mark " and using
 "				g` command to avoid clobbering jumplist. 
 "   1.00.004	15-May-2009	Added mappings for <cword> / selected word. 
 "				A literal pattern (like <cword>) is now
@@ -50,7 +53,7 @@ function! s:GetMatchesCnt( range, pattern )
 
     redir => l:matches
     try
-	silent execute a:range . 's/' . escape(a:pattern, '/') . '//gn'
+	silent execute 'keepjumps' a:range . 's/' . escape(a:pattern, '/') . '//gn'
 	redir END
 	let l:matchesCnt = matchstr( l:matches, '\n\zs\d\+' )
     catch /^Vim\%((\a\+)\)\=:E486/ " Pattern not found
