@@ -175,8 +175,6 @@ function! s:SearchPosition( line1, line2, pattern, isLiteral )
 	return
     endif
 
-    let l:pattern = (a:isLiteral ? '\V' . escape(a:pattern, '\') : a:pattern)
-
     let l:save_cursor = getpos('.')
     let l:cursorLine = line('.')
     let l:cursorVirtCol = virtcol('.')
@@ -190,16 +188,16 @@ function! s:SearchPosition( line1, line2, pattern, isLiteral )
 
     let l:lineBeforeCurrent = (l:isOnClosedFold ? foldclosed(l:cursorLine) : l:cursorLine) - 1
     if l:lineBeforeCurrent >= l:startLine
-	let l:matchesBefore = s:GetMatchesCnt( l:startLine . ',' . l:lineBeforeCurrent, l:pattern )
+	let l:matchesBefore = s:GetMatchesCnt( l:startLine . ',' . l:lineBeforeCurrent, a:pattern )
     endif
 
     " The range '.' represents either the current line or the entire current
     " closed fold. 
-    let l:matchesCurrent = s:GetMatchesCnt('.', l:pattern)
+    let l:matchesCurrent = s:GetMatchesCnt('.', a:pattern)
 
     let l:lineAfterCurrent = (l:isOnClosedFold ? foldclosedend(l:cursorLine) : l:cursorLine) + 1
     if l:lineAfterCurrent <= l:endLine
-	let l:matchesAfter = s:GetMatchesCnt( l:lineAfterCurrent . ',' . l:endLine, l:pattern )
+	let l:matchesAfter = s:GetMatchesCnt( l:lineAfterCurrent . ',' . l:endLine, a:pattern )
     endif
 "****D echomsg '****' l:matchesBefore '/' l:matchesCurrent '/' l:matchesAfter
 
@@ -215,7 +213,7 @@ function! s:SearchPosition( line1, line2, pattern, isLiteral )
 	call cursor(l:cursorLine, 1)
 	" This triple records matches only in the current line (not current fold!),
 	" split into before, on, and after cursor position. 
-	while search( l:pattern, (l:before + l:exact + l:after ? '' : 'c'), l:cursorLine )
+	while search( a:pattern, (l:before + l:exact + l:after ? '' : 'c'), l:cursorLine )
 	    let l:matchVirtCol = virtcol('.')
 	    if l:matchVirtCol < l:cursorVirtCol
 		let l:before += 1
@@ -270,15 +268,19 @@ if ! hasmapto('<Plug>SearchPositionCurrent', 'v')
 endif
 
 let s:pattern = ''
-function! s:SetPattern( pattern )
-    if ! empty(a:pattern)
-	let s:pattern = a:pattern
+function! s:SetPattern( text, isWholeWord )
+    if ! empty(a:text)
+	let s:pattern = ingosearch#LiteralTextToSearchPattern(a:text, a:isWholeWord, '')
     endif
     return s:pattern
 endfunction
-nnoremap <silent> <Plug>SearchPositionCword :<C-u>call <SID>SearchPosition((v:count ? line('.') : 0), (v:count ? line('.') + v:count - 1 : 0), <SID>SetPattern(expand('<cword>')), 1)<CR>
+nnoremap <silent> <Plug>SearchPositionCword	 :<C-u>call <SID>SearchPosition((v:count ? line('.') : 0), (v:count ? line('.') + v:count - 1 : 0), <SID>SetPattern(expand('<cword>'), 0), 1)<CR>
+nnoremap <silent> <Plug>SearchPositionWholeCword :<C-u>call <SID>SearchPosition((v:count ? line('.') : 0), (v:count ? line('.') + v:count - 1 : 0), <SID>SetPattern(expand('<cword>'), 1), 1)<CR>
+if ! hasmapto('<Plug>SearchPositionWholeCword', 'n')
+    nmap <silent> <A-m> <Plug>SearchPositionWholeCword
+endif
 if ! hasmapto('<Plug>SearchPositionCword', 'n')
-    nmap <silent> <A-m> <Plug>SearchPositionCword
+    nmap <silent> g<A-m> <Plug>SearchPositionCword
 endif
 vnoremap <silent> <Plug>SearchPositionCword :<C-u>let save_unnamedregister=@@<CR>gvy: call <SID>SearchPosition(0, 0, @@, 1)<CR>:let @@=save_unnamedregister<Bar>unlet save_unnamedregister<CR>
 if ! hasmapto('<Plug>SearchPositionCword', 'v')
