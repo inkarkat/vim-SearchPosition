@@ -10,6 +10,8 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS 
+"   1.02.007	11-Sep-2009	BUG: Cannot set mark " in Vim 7.0 and 7.1; using
+"				mark z instead. 
 "   1.01.006	19-Jun-2009	Using :keepjumps to avoid that the :substitute
 "				command in s:GetMatchesCnt() clobbers the
 "				jumplist. 
@@ -241,10 +243,18 @@ function! s:SearchPositionOperator( type )
     " of the range, so if the motion goes backward, the cursor will move. For
     " this report-only command this is not desired, so we use a mark to pin the
     " cursor down. 
-    normal! g`"
+    if v:version < 702
+	normal! g`z
+    else
+	normal! g`"
+    endif
     call s:SearchPosition(line("'["), line("']"), '', 0)
 endfunction
-nnoremap <Plug>SearchPositionOperator m":set opfunc=<SID>SearchPositionOperator<CR>g@
+if v:version < 702
+    nnoremap <Plug>SearchPositionOperator mz:set opfunc=<SID>SearchPositionOperator<CR>g@
+else
+    nnoremap <Plug>SearchPositionOperator m":set opfunc=<SID>SearchPositionOperator<CR>g@
+endif
 if ! hasmapto('<Plug>SearchPositionOperator', 'n')
     nmap <silent> <Leader><A-n> <Plug>SearchPositionOperator
 endif
