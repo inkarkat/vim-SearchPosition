@@ -72,13 +72,13 @@ USAGE							*SearchPosition-usage*
 ==============================================================================
 INSTALLATION					 *SearchPosition-installation*
 
-This script is packaged as a|vimball|. If you have the "gunzip" decompressor
+This script is packaged as a |vimball|. If you have the "gunzip" decompressor
 in your PATH, simply edit the *.vba.gz package in Vim; otherwise, decompress
 the archive first, e.g. using WinZip. Inside Vim, install by sourcing the
-vimball or via the|:UseVimball|command. >
+vimball or via the |:UseVimball| command. >
     vim SearchPosition.vba.gz
     :so %
-To uninstall, use the|:RmVimball|command. 
+To uninstall, use the |:RmVimball| command. 
 
 DEPENDENCIES					 *SearchPosition-dependencies*
 
@@ -89,7 +89,7 @@ CONFIGURATION					*SearchPosition-configuration*
 
 If you want to use different mappings, map your keys to the
 <Plug>SearchPosition* mapping targets _before_ sourcing this script (e.g. in
-your|vimrc|): >
+your |vimrc|): >
     nmap <silent> <Leader>,n <Plug>SearchPositionOperator
     nmap <silent> <Leader>n <Plug>SearchPositionCurrent
     vmap <silent> <Leader>n <Plug>SearchPositionCurrent
@@ -115,6 +115,13 @@ IDEAS							*SearchPosition-ideas*
 ==============================================================================
 HISTORY						      *SearchPosition-history*
 
+1.02	11-Sep-2009
+BUG: Cannot set mark " in Vim 7.0 and 7.1; using mark z instead. This only
+affected the <Leader><A-n>{motion} command. 
+
+1.01	19-Jun-2009
+The jumplist is not clobbered anymore by the :SearchPosition command. 
+
 1.00	15-May-2009
 First published version. 
 
@@ -123,7 +130,7 @@ Started development.
 
 ==============================================================================
 Copyright: (C) 2009 by Ingo Karkat
-The VIM LICENSE applies to this script; see|copyright|. 
+The VIM LICENSE applies to this script; see |copyright|. 
 
 Maintainer:	Ingo Karkat <ingo@karkat.de>
 ==============================================================================
