@@ -61,13 +61,20 @@ USAGE							*SearchPosition-usage*
 			is easy to reach. Imagine 'n' stood for "next
 			searches". 
 							     *ALT-M* *v_ALT-M*
-[count]<A-m>		Show position for the word under the cursor in the
+[count]<A-m>		Show position for the whole word under the cursor in
+			the entire buffer, or [count] following lines. 
+			Only whole keywords are searched for, like with the
+			|star| command. 
+[count]g<A-m>		Show position for the word under the cursor in the
 			entire buffer, or [count] following lines. 
-			Reuses the last used <cword> when on a blank line. 
+			Also finds contained matches, like |gstar|. 
+
 {Visual}<A-m>		Show position for the selected text in the entire
 			buffer. 
 
 			Imagine 'm' stood for "more occurrences". 
+			These mappings reuse the last used <cword> when issued
+			on a blank line. 
 
 ==============================================================================
 INSTALLATION					 *SearchPosition-installation*
@@ -93,8 +100,9 @@ your |vimrc|): >
     nmap <silent> <Leader>,n <Plug>SearchPositionOperator
     nmap <silent> <Leader>n <Plug>SearchPositionCurrent
     vmap <silent> <Leader>n <Plug>SearchPositionCurrent
-    nmap <silent> <Leader>m <Plug>SearchPositionCword
+    nmap <silent> <Leader>m <Plug>SearchPositionWholeCword
     vmap <silent> <Leader>m <Plug>SearchPositionCword
+    nmap <silent> <Leader>M <Plug>SearchPositionCword
 
 
 The highlight group for the report message can be set via >
@@ -115,6 +123,10 @@ IDEAS							*SearchPosition-ideas*
 ==============================================================================
 HISTORY						      *SearchPosition-history*
 
+1.03	05-Jan-2010
+ENH: Offering a whole-word ALT-M mapping in addition to the former literal
+search (which is now mapped to g_ALT-M), like the |star| and |gstar| commands. 
+
 1.02	11-Sep-2009
 BUG: Cannot set mark " in Vim 7.0 and 7.1; using mark z instead. This only
 affected the <Leader><A-n>{motion} command. 
@@ -129,7 +141,7 @@ First published version.
 Started development. 
 
 ==============================================================================
-Copyright: (C) 2009 by Ingo Karkat
+Copyright: (C) 2009-2010 by Ingo Karkat
 The VIM LICENSE applies to this script; see |copyright|. 
 
 Maintainer:	Ingo Karkat <ingo@karkat.de>
