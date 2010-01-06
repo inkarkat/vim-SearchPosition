@@ -1,15 +1,24 @@
 " SearchPosition.vim: Show relation to search pattern matches in range or buffer. 
 "
 " DEPENDENCIES:
+"   - ingosearch.vim autoload script. 
 "   - EchoWithoutScrolling.vim autoload script (optional, only for showing
 "     pattern). 
 "
-" Copyright: (C) 2008-2009 by Ingo Karkat
+" Copyright: (C) 2008-2010 by Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'. 
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS 
+"   1.03.008	05-Jan-2010	ENH: Offering a whole-word ALT-M mapping and the
+"				old literal search via g_ALT-M, like the |star|
+"				and |gstar| commands. 
+"				Using ingosearch.vim for conversion of literal
+"				text to search pattern, as enclosing in \<...\>
+"				is non-trivial. 
+"				Refactored s:SetPattern() to do the expansion of
+"				<cword> itself. 
 "   1.02.007	11-Sep-2009	BUG: Cannot set mark " in Vim 7.0 and 7.1; using
 "				mark z instead. 
 "   1.01.006	19-Jun-2009	Using :keepjumps to avoid that the :substitute
@@ -117,7 +126,7 @@ function! s:Evaluate( matchResults )
     let l:evaluation = substitute( l:evaluation, '{\%(\d\|+\)\+}', '\=s:ResolveParameters(a:matchResults, submatch(0))', 'g' )
     return substitute( l:evaluation, '1 matches' , '1 match', 'g' )
 endfunction
-function! s:Report( line1, line2, pattern, isLiteral, evaluation )
+function! s:Report( line1, line2, pattern, evaluation )
     let l:range = ''
     if g:SearchPosition_ShowRange
 	let l:range = a:line1 . ',' . a:line2
@@ -132,7 +141,7 @@ function! s:Report( line1, line2, pattern, isLiteral, evaluation )
     endif
     let l:pattern = ''
     if g:SearchPosition_ShowPattern
-	let l:pattern = EchoWithoutScrolling#TranslateLineBreaks(a:isLiteral ? a:pattern : '/' . (empty(a:pattern) ? @/ : escape(a:pattern, '/')) . '/')
+	let l:pattern = EchoWithoutScrolling#TranslateLineBreaks('/' . (empty(a:pattern) ? @/ : escape(a:pattern, '/')) . '/')
     endif
 
     redraw  " This is necessary because of the :redir done earlier. 
@@ -175,12 +184,6 @@ function! s:SearchPosition( line1, line2, pattern, isLiteral )
 	return
     endif
 
-    if a:isLiteral
-	let l:pattern = ingosearch#LiteralTextToSearchPattern(a:pattern, (a:isLiteral == 2), '')
-    else
-	let l:pattern = a:pattern
-    endif
-
     let l:save_cursor = getpos('.')
     let l:cursorLine = line('.')
     let l:cursorVirtCol = virtcol('.')
@@ -194,16 +197,16 @@ function! s:SearchPosition( line1, line2, pattern, isLiteral )
 
     let l:lineBeforeCurrent = (l:isOnClosedFold ? foldclosed(l:cursorLine) : l:cursorLine) - 1
     if l:lineBeforeCurrent >= l:startLine
-	let l:matchesBefore = s:GetMatchesCnt( l:startLine . ',' . l:lineBeforeCurrent, l:pattern )
+	let l:matchesBefore = s:GetMatchesCnt( l:startLine . ',' . l:lineBeforeCurrent, a:pattern )
     endif
 
     " The range '.' represents either the current line or the entire current
     " closed fold. 
-    let l:matchesCurrent = s:GetMatchesCnt('.', l:pattern)
+    let l:matchesCurrent = s:GetMatchesCnt('.', a:pattern)
 
     let l:lineAfterCurrent = (l:isOnClosedFold ? foldclosedend(l:cursorLine) : l:cursorLine) + 1
     if l:lineAfterCurrent <= l:endLine
-	let l:matchesAfter = s:GetMatchesCnt( l:lineAfterCurrent . ',' . l:endLine, l:pattern )
+	let l:matchesAfter = s:GetMatchesCnt( l:lineAfterCurrent . ',' . l:endLine, a:pattern )
     endif
 "****D echomsg '****' l:matchesBefore '/' l:matchesCurrent '/' l:matchesAfter
 
@@ -219,7 +222,7 @@ function! s:SearchPosition( line1, line2, pattern, isLiteral )
 	call cursor(l:cursorLine, 1)
 	" This triple records matches only in the current line (not current fold!),
 	" split into before, on, and after cursor position. 
-	while search( l:pattern, (l:before + l:exact + l:after ? '' : 'c'), l:cursorLine )
+	while search( a:pattern, (l:before + l:exact + l:after ? '' : 'c'), l:cursorLine )
 	    let l:matchVirtCol = virtcol('.')
 	    if l:matchVirtCol < l:cursorVirtCol
 		let l:before += 1
@@ -235,7 +238,7 @@ function! s:SearchPosition( line1, line2, pattern, isLiteral )
 "****D echomsg '****' l:before '/' l:exact '/' l:after
     endif
 
-    call s:Report( l:startLine, l:endLine, a:pattern, a:isLiteral, s:Evaluate( [l:matchesBefore, l:matchesCurrent, l:matchesAfter, l:before, l:exact, l:after] ) )
+    call s:Report( l:startLine, l:endLine, a:pattern, s:Evaluate( [l:matchesBefore, l:matchesCurrent, l:matchesAfter, l:before, l:exact, l:after] ) )
 endfunction
 
 "- commands and mappings ------------------------------------------------------
@@ -273,16 +276,16 @@ if ! hasmapto('<Plug>SearchPositionCurrent', 'v')
     vmap <silent> <A-n> <Plug>SearchPositionCurrent
 endif
 
-let s:cword = ''
-function! s:SetCword()
+let s:pattern = ''
+function! s:SetCword( isWholeWord )
     let l:cword = expand('<cword>')
     if ! empty(l:cword)
-	let s:cword = l:cword
+	let s:pattern = ingosearch#LiteralTextToSearchPattern(l:cword, a:isWholeWord, '')
     endif
-    return s:cword
+    return s:pattern
 endfunction
-nnoremap <silent> <Plug>SearchPositionCword	 :<C-u>call <SID>SearchPosition((v:count ? line('.') : 0), (v:count ? line('.') + v:count - 1 : 0), <SID>SetCword(), 1)<CR>
-nnoremap <silent> <Plug>SearchPositionWholeCword :<C-u>call <SID>SearchPosition((v:count ? line('.') : 0), (v:count ? line('.') + v:count - 1 : 0), <SID>SetCword(), 2)<CR>
+nnoremap <silent> <Plug>SearchPositionWholeCword :<C-u>call <SID>SearchPosition((v:count ? line('.') : 0), (v:count ? line('.') + v:count - 1 : 0), <SID>SetCword(1), 1)<CR>
+nnoremap <silent> <Plug>SearchPositionCword	 :<C-u>call <SID>SearchPosition((v:count ? line('.') : 0), (v:count ? line('.') + v:count - 1 : 0), <SID>SetCword(0), 1)<CR>
 if ! hasmapto('<Plug>SearchPositionWholeCword', 'n')
     nmap <silent> <A-m> <Plug>SearchPositionWholeCword
 endif
