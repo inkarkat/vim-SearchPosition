@@ -11,6 +11,11 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS 
+"   1.04.010	08-Jan-2010	BUG: Catch non-existing items in s:evaluations
+"				(e.g. "000100") that can be caused by e.g.
+"				having \%# inside the search pattern. Warn about
+"				"special atoms have distorted the tally" in such
+"				cases. 
 "   1.04.009	07-Jan-2010	BUG: Wrong reporting of additional occurrences
 "				when the current line is outside the passed
 "				range. 
@@ -127,13 +132,22 @@ endfunction
 function! s:Evaluate( matchResults )
     let l:matchVector = join( map( copy(a:matchResults), '!!v:val' ), '' )
 
+    if ! has_key(s:evaluation, l:matchVector)
+	return [0, 'Special atoms have distorted the tally']
+    endif
+
     let l:evaluation = s:evaluation[ l:matchVector ]
     let l:evaluation = substitute( l:evaluation, '{\%(\d\|+\)\+}', '\=s:ResolveParameters(a:matchResults, submatch(0))', 'g' )
-    return substitute( l:evaluation, '1 matches' , '1 match', 'g' )
+    return [1, substitute( l:evaluation, '1 matches' , '1 match', 'g' )]
 endfunction
 function! s:Report( line1, line2, pattern, evaluation )
+    let [l:isSuccessful, l:evaluationText] = a:evaluation
+
+    redraw  " This is necessary because of the :redir done earlier. 
+    echo ''
+
     let l:range = ''
-    if g:SearchPosition_ShowRange
+    if g:SearchPosition_ShowRange && l:isSuccessful
 	let l:range = a:line1 . ',' . a:line2
 	if a:line1 == 1 && a:line2 == line('$')
 	    let l:range = ''
@@ -142,28 +156,30 @@ function! s:Report( line1, line2, pattern, evaluation )
 	endif
 	if ! empty(l:range)
 	    let l:range = ':' . l:range . ' '
+	    echon l:range 
 	endif
     endif
+
     let l:pattern = ''
     if g:SearchPosition_ShowPattern
 	let l:pattern = EchoWithoutScrolling#TranslateLineBreaks('/' . (empty(a:pattern) ? @/ : escape(a:pattern, '/')) . '/')
     endif
 
-    " This simplifies testing by making the captured evaluation appear on a new line. 
-    silent echo ''
-    redraw  " This is necessary because of the :redir done earlier. 
-    echon l:range 
-    execute (empty(g:SearchPosition_HighlightGroup) ? '' : 'echohl ' . g:SearchPosition_HighlightGroup)
-    echon a:evaluation
-    echohl None
+    execute 'echohl' (l:isSuccessful ? 
+    \	empty(g:SearchPosition_HighlightGroup) ? 'None' : g:SearchPosition_HighlightGroup :
+    \	'WarningMsg'
+    \)
+    echon l:evaluationText
+    if l:isSuccessful | echohl None | endif
 
     if ! empty(l:pattern)
 	" Assumption: The evaluation message only contains printable ASCII
 	" characters; we can thus simple use strlen() to determine the number of
 	" occupied virtual columns. Otherwise,
 	" EchoWithoutScrolling#DetermineVirtColNum() could be used. 
-	echon EchoWithoutScrolling#Truncate( ' for ' . l:pattern, (strlen(l:range) + strlen(a:evaluation)) )
+	echon EchoWithoutScrolling#Truncate( ' for ' . l:pattern, (strlen(l:range) + strlen(l:evaluationText)) )
     endif
+    if ! l:isSuccessful | echohl None | endif
 endfunction
 function! s:SearchPosition( line1, line2, pattern, isLiteral )
     let l:startLine = (a:line1 ? max([a:line1, 1]) : 1)
