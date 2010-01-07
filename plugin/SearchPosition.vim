@@ -11,6 +11,9 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS 
+"   1.04.009	07-Jan-2010	BUG: Wrong reporting of additional occurrences
+"				when the current line is outside the passed
+"				range. 
 "   1.03.008	05-Jan-2010	ENH: Offering a whole-word ALT-M mapping and the
 "				old literal search via g_ALT-M, like the |star|
 "				and |gstar| commands. 
@@ -45,6 +48,8 @@ if exists('g:loaded_SearchPosition') || (v:version < 700)
     finish
 endif
 let g:loaded_SearchPosition = 1
+let s:save_cpo = &cpo
+set cpo&vim
 
 "- configuration --------------------------------------------------------------
 if ! exists('g:SearchPosition_HighlightGroup')
@@ -144,6 +149,8 @@ function! s:Report( line1, line2, pattern, evaluation )
 	let l:pattern = EchoWithoutScrolling#TranslateLineBreaks('/' . (empty(a:pattern) ? @/ : escape(a:pattern, '/')) . '/')
     endif
 
+    " This simplifies testing by making the captured evaluation appear on a new line. 
+    silent echo ''
     redraw  " This is necessary because of the :redir done earlier. 
     echon l:range 
     execute (empty(g:SearchPosition_HighlightGroup) ? '' : 'echohl ' . g:SearchPosition_HighlightGroup)
@@ -166,17 +173,13 @@ function! s:SearchPosition( line1, line2, pattern, isLiteral )
     " correct the end line merely for output cosmetics, as the calculation is
     " not affected by this. 
     let l:endLine = (foldclosed(l:endLine) == -1 ? l:endLine : foldclosedend(l:endLine))
+"****D echomsg '****' a:line1 a:line2
 "****D echomsg '****' l:startLine l:endLine
 
     " Skip processing if there is no pattern. 
     if empty(a:pattern) && (a:isLiteral || empty(@/))
-	" This check is necessary not just to better inform the user, but also
-	" because the two methods to tally overall and matches in the current
-	" line react different to an empty literal pattern (/\V/): %s/\V//gn
-	" matches every character and once for an empty line, but search('\V')
-	" does not move the cursor and does not match in an empty line. 
-	" This discrepance caused this to report being "in this fold" when
-	" executed with a literal empty pattern on an empty line. 
+	" Using an empty pattern would cause the previously used search pattern
+	" to be used (if there is any). 
 	echohl ErrorMsg
 	let v:errmsg = (a:isLiteral ? 'Nothing selected' : 'E35: No previous regular expression')
 	echomsg v:errmsg
@@ -187,7 +190,8 @@ function! s:SearchPosition( line1, line2, pattern, isLiteral )
     let l:save_cursor = getpos('.')
     let l:cursorLine = line('.')
     let l:cursorVirtCol = virtcol('.')
-    let l:isOnClosedFold = (foldclosed(l:cursorLine) != -1)
+    let l:isCursorOnClosedFold = (foldclosed(l:cursorLine) != -1)
+    let l:isCursorInsideRange = (l:cursorLine >= l:startLine && l:cursorLine <= l:endLine)
 
     " This triple records matches relative to the current line or current closed
     " fold. 
@@ -195,25 +199,39 @@ function! s:SearchPosition( line1, line2, pattern, isLiteral )
     let l:matchesCurrent = 0
     let l:matchesAfter = 0
 
-    let l:lineBeforeCurrent = (l:isOnClosedFold ? foldclosed(l:cursorLine) : l:cursorLine) - 1
-    if l:lineBeforeCurrent >= l:startLine
-	let l:matchesBefore = s:GetMatchesCnt( l:startLine . ',' . l:lineBeforeCurrent, a:pattern )
+    if l:cursorLine >= l:startLine
+	let l:lineBeforeCurrent = (l:isCursorInsideRange ? 
+	\   (l:isCursorOnClosedFold ? foldclosed(l:cursorLine) : l:cursorLine) - 1 :
+	\   l:endLine
+	\)
+	if l:lineBeforeCurrent >= l:startLine
+	    let l:matchesBefore = s:GetMatchesCnt( l:startLine . ',' . l:lineBeforeCurrent, a:pattern )
+	endif
     endif
 
-    " The range '.' represents either the current line or the entire current
-    " closed fold. 
-    let l:matchesCurrent = s:GetMatchesCnt('.', a:pattern)
+    if l:isCursorInsideRange
+	" The range '.' represents either the current line or the entire current
+	" closed fold. 
+	" We're not interested in matches on the current line if it's outside
+	" the range to be examined. 
+	let l:matchesCurrent = s:GetMatchesCnt('.', a:pattern)
+    endif
 
-    let l:lineAfterCurrent = (l:isOnClosedFold ? foldclosedend(l:cursorLine) : l:cursorLine) + 1
-    if l:lineAfterCurrent <= l:endLine
-	let l:matchesAfter = s:GetMatchesCnt( l:lineAfterCurrent . ',' . l:endLine, a:pattern )
+    if l:cursorLine <= l:endLine
+	let l:lineAfterCurrent = (l:isCursorInsideRange ?
+	\   (l:isCursorOnClosedFold ? foldclosedend(l:cursorLine) : l:cursorLine) + 1 :
+	\   l:startLine
+	\)
+	if l:lineAfterCurrent <= l:endLine
+	    let l:matchesAfter = s:GetMatchesCnt( l:lineAfterCurrent . ',' . l:endLine, a:pattern )
+	endif
     endif
 "****D echomsg '****' l:matchesBefore '/' l:matchesCurrent '/' l:matchesAfter
 
     let l:before = 0
     let l:exact = 0
     let l:after = 0
-    if ! l:isOnClosedFold && l:cursorLine >= l:startLine && l:cursorLine <= l:endLine
+    if ! l:isCursorOnClosedFold && l:isCursorInsideRange
 	" We're not interested in matches on the current line if we're on a
 	" closed fold; this would be just too much information. The user can
 	" quickly open the fold and re-run the command if he's interested. 
@@ -297,4 +315,6 @@ if ! hasmapto('<Plug>SearchPositionCword', 'v')
     vmap <silent> <A-m> <Plug>SearchPositionCword
 endif
 
+let &cpo = s:save_cpo
+unlet s:save_cpo
 " vim: set sts=4 sw=4 noexpandtab ff=unix fdm=syntax :
