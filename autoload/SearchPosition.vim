@@ -32,6 +32,21 @@ function! s:GetMatchesCnt( range, pattern )
 
     return l:matchesCnt
 endfunction
+" The position in the key is a boolean (0/1) whether there are any matches. 
+" The placeholder {N} will be filled with the actual number, where N is: 
+" 1: matches before line, 2: matches current line, 3: matches after line,
+" 4: before cursor, 5: exact on cursor, 6: after cursor in current line
+"
+" Terminology: 
+" "overall" is used when all matches are limited to a certain partition of the
+" range, e.g. all before the cursor (and thus none on or after the cursor). 
+" "total" is used when there's no such partition; matches are scattered
+" throughout the range. 
+" Example: 
+"6 = /4
+"   2 | 1
+"     2/ = 3
+"   2 matches before and 1 after cursor in this line, 6 and 3 overall; total 9
 let s:evaluation = {
 \   '000000': 'No matches', 
 \   '001000': '{3} matches after this line', 
