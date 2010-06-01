@@ -1,0 +1,15 @@
+On first match, 1 following in line, 5 overall for /\<foo\>/
+
+On last match of 2 in this line, 4 in following lines; total 6 for /\<foo\>/
+
+1 match before and 1 after cursor in this line, 4 in following lines; total 6 for /\<foo\>/
+
+2 matches before cursor in this line, 4 in following lines; total 6 for /\<foo\>/
+
+On sole match in this line, 2 before and 3 after this line; total 6 for /\<foo\>/
+
+1 match after cursor in this line, 4 following, 2 in previous lines; total 6 for /\<foo\>/
+
+1 match before cursor in this line, 3 before overall, 3 after this line; total 6 for /\<foo\>/
+
+6 matches before this line for /\<foo\>/
