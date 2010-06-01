@@ -123,6 +123,14 @@ IDEAS							*SearchPosition-ideas*
 ==============================================================================
 HISTORY						      *SearchPosition-history*
 
+1.10	08-Jan-2010
+- Moved functions from plugin to separate autoload script.
+- BUG: Wrong reporting of additional occurrences when the current line is
+  outside the passed range. 
+- BUG: Catch non-existing items in evaluations that can be caused by e.g.
+  having \%# inside the search pattern. Warn about "special atoms have
+  distorted the tally" in such cases. 
+
 1.03	05-Jan-2010
 ENH: Offering a whole-word ALT-M mapping in addition to the former literal
 search (which is now mapped to g_ALT-M), like the |star| and |gstar| commands. 
