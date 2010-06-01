@@ -1,0 +1,7 @@
+On first match, 1 following in line, 5 overall for /\<foo\>/
+
+2 matches after this line for /tool/
+
+2 matches after this line for /one line/
+
+2 matches after this line for /\(['"]\)one\s\+line\1/
