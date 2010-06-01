@@ -1,0 +1,15 @@
+:1 On first match, 1 after cursor in this line for /\<foo\>/
+
+:1,15 On first match, 1 following in line, 3 overall for /\<foo\>/
+
+On first match, 1 after cursor in this line for /\<foo\>/
+
+On first match, 1 following in line, 3 overall for /\<foo\>/
+
+On first match, 1 after cursor in this line
+
+On first match, 1 following in line, 3 overall
+
+:1 On first match, 1 after cursor in this line
+
+:1,15 On first match, 1 following in line, 3 overall
