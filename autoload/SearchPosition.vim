@@ -15,6 +15,14 @@
 "				(Vim version-dependent) mark to keep the cursor
 "				at the position where the operator was invoked
 "				(only necessary with a backward {motion}). 
+"				BUG: Incorrect reporting of sole match in folded
+"				line when the current line is empty and the
+"				pattern starts matching a newline character.
+"				The reason is that search() doesn't match a
+"				pattern that starts with a newline character on
+"				an empty line. We have to move to the last
+"				character on the line before the empty line to
+"				achieve the match. 
 "   1.11.002	02-Jun-2010	Appended "; total N" to evaluations that
 "				excluded the match on the cursor from the
 "				"overall" count, as it was misleading what
@@ -239,6 +247,35 @@ function! SearchPosition#SearchPosition( line1, line2, pattern, isLiteral )
 		throw 'ASSERT: false'
 	    endif 
 	endwhile
+
+	" search() doesn't match a pattern that starts with a newline character
+	" on an empty line. We have to move to the last character on the line
+	" before the empty line to achieve the match. 
+	"
+	" Detect this special case when the current line is empty and there were
+	" no matches. Without this special handling, SearchPosition would deduce
+	" that the current line is inside a fold. 
+	if empty(getline(l:cursorLine)) && (l:before + l:exact + l:after) == 0
+	    " Moving to the previous character must be handled differently when
+	    " on the first line; in that case, we need wrap-around enabled. 
+	    let [l:adaptionMovement, l:searchFlags, l:searchStopLine] =
+	    \	(l:cursorLine == 1 ?
+	    \	    ['G$', 'w', 0] :
+	    \	    ['k$', 'c', l:cursorLine]
+	    \	)
+	    execute 'normal!' l:adaptionMovement
+	    if search(a:pattern, l:searchFlags, l:searchStopLine)
+		" On an empty line, the cursor is usually on the newline
+		" character, but it can be after it (= match before cursor) if
+		" 'virtualedit' is set. 
+		if l:cursorVirtCol == 1
+		    let l:exact += 1
+		else
+		    let l:before += 1
+		endif
+	    endif
+	endif
+
 	call setpos('.', l:save_cursor)
 "****D echomsg '****' l:before '/' l:exact '/' l:after
     endif
