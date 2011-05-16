@@ -4,12 +4,14 @@
 "   - Requires Vim 7.0 or higher. 
 "   - SearchPosition.vim autoload script. 
 "
-" Copyright: (C) 2008-2010 by Ingo Karkat
+" Copyright: (C) 2008-2011 by Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'. 
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS 
+"   1.13.013	17-May-2011	Also save and restore regtype of the unnamed
+"				register in mappings. 
 "   1.12.012	08-Oct-2010	Using SearchPosition#SavePosition() instead of
 "				(Vim version-dependent) mark to keep the cursor
 "				at the position where the operator was invoked
@@ -101,7 +103,7 @@ endif
 if ! hasmapto('<Plug>SearchPositionCword', 'n')
     nmap <silent> g<A-m> <Plug>SearchPositionCword
 endif
-vnoremap <silent> <Plug>SearchPositionCword :<C-u>let save_unnamedregister=@@<CR>gvy: call SearchPosition#SearchPosition(0, 0, substitute(@@, "\n", '\\n', 'g'), 1)<CR>:let @@=save_unnamedregister<Bar>unlet save_unnamedregister<CR>
+vnoremap <silent> <Plug>SearchPositionCword :<C-u>let save_reg=getreg('"')<Bar>let save_regtype=getregtype('"')<CR>gvy: call SearchPosition#SearchPosition(0, 0, substitute(@", "\n", '\\n', 'g'), 1)<CR>:call setreg('"', save_reg, save_regtype)<Bar>unlet save_reg<Bar>unlet save_regtype<CR>
 if ! hasmapto('<Plug>SearchPositionCword', 'v')
     vmap <silent> <A-m> <Plug>SearchPositionCword
 endif
