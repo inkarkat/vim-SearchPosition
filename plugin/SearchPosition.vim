@@ -14,6 +14,10 @@
 "				(Vim version-dependent) mark to keep the cursor
 "				at the position where the operator was invoked
 "				(only necessary with a backward {motion}). 
+"				BUG: Visual mode <A-m> /
+"				<Plug>SearchPositionCword mapping on multi-line
+"				selection searched for ^@, not the newline
+"				character \n. Handling this via substitution. 
 "   1.10.011	08-Jan-2010	Moved functions from plugin to separate autoload
 "				script.
 "   1.10.010	08-Jan-2010	BUG: Catch non-existing items in s:evaluations
@@ -97,7 +101,7 @@ endif
 if ! hasmapto('<Plug>SearchPositionCword', 'n')
     nmap <silent> g<A-m> <Plug>SearchPositionCword
 endif
-vnoremap <silent> <Plug>SearchPositionCword :<C-u>let save_unnamedregister=@@<CR>gvy: call SearchPosition#SearchPosition(0, 0, @@, 1)<CR>:let @@=save_unnamedregister<Bar>unlet save_unnamedregister<CR>
+vnoremap <silent> <Plug>SearchPositionCword :<C-u>let save_unnamedregister=@@<CR>gvy: call SearchPosition#SearchPosition(0, 0, substitute(@@, "\n", '\\n', 'g'), 1)<CR>:let @@=save_unnamedregister<Bar>unlet save_unnamedregister<CR>
 if ! hasmapto('<Plug>SearchPositionCword', 'v')
     vmap <silent> <A-m> <Plug>SearchPositionCword
 endif
