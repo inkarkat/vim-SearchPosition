@@ -1,8 +1,5 @@
 autoload/EchoWithoutScrolling.vim
+autoload/SearchPosition.vim
 autoload/ingosearch.vim
 plugin/SearchPosition.vim
 doc/SearchPosition.txt
-
-:cd $HOME/Ablage|1,.-2MkVimball! SearchPosition.vba
-:cd $HOME/Ablage|! "unix && gzip -f9 SearchPosition.vba"
-
