@@ -11,6 +11,12 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS 
+"   1.13.004	08-Oct-2010	BUG: The previous fix for the incorrect
+"				reporting of sole match in folded line was
+"				susceptible to non-local matches when current
+"				line is the first line. Fixed by explicitly
+"				checking resulting line number of search(). 
+"				line when the current line is empty
 "   1.12.003	08-Oct-2010	Using SearchPosition#SavePosition() instead of
 "				(Vim version-dependent) mark to keep the cursor
 "				at the position where the operator was invoked
@@ -264,7 +270,13 @@ function! SearchPosition#SearchPosition( line1, line2, pattern, isLiteral )
 	    \	    ['k$', 'c', l:cursorLine]
 	    \	)
 	    execute 'normal!' l:adaptionMovement
-	    if search(a:pattern, l:searchFlags, l:searchStopLine)
+	    let l:matchLine = search(a:pattern, l:searchFlags, l:searchStopLine)
+	    " Depending on whether the pattern matches only a newline character
+	    " or more after it, the line number is the one before or the current
+	    " line. This check is only needed for a match on the first line, as
+	    " we use a stopline for all other searches that do not need to wrap
+	    " around. 
+	    if l:matchLine == l:cursorLine - 1 || l:matchLine == l:cursorLine
 		" On an empty line, the cursor is usually on the newline
 		" character, but it can be after it (= match before cursor) if
 		" 'virtualedit' is set. 
