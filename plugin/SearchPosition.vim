@@ -11,6 +11,8 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS 
+"   1.15.015	30-Sep-2011	Use <silent> for <Plug> mapping instead of
+"				default mapping. 
 "   1.14.014	12-Sep-2011	Use ingointegration#GetVisualSelection() instead
 "				of inline capture. 
 "   1.13.013	17-May-2011	Also save and restore regtype of the unnamed
@@ -85,32 +87,32 @@ endif
 "- commands and mappings ------------------------------------------------------
 command! -range=% -nargs=? SearchPosition call SearchPosition#SearchPosition(<line1>, <line2>, <q-args>, 0)
 
-nnoremap <Plug>SearchPositionOperator :<C-u>call SearchPosition#SavePosition()<Bar>set opfunc=SearchPosition#Operator<CR>g@
+nnoremap <silent> <Plug>SearchPositionOperator :<C-u>call SearchPosition#SavePosition()<Bar>set opfunc=SearchPosition#Operator<CR>g@
 if ! hasmapto('<Plug>SearchPositionOperator', 'n')
-    nmap <silent> <Leader><A-n> <Plug>SearchPositionOperator
+    nmap <Leader><A-n> <Plug>SearchPositionOperator
 endif
 
 
 nnoremap <silent> <Plug>SearchPositionCurrent :SearchPosition<CR>
 if ! hasmapto('<Plug>SearchPositionCurrent', 'n')
-    nmap <silent> <A-n> <Plug>SearchPositionCurrent
+    nmap <A-n> <Plug>SearchPositionCurrent
 endif
 vnoremap <silent> <Plug>SearchPositionCurrent :SearchPosition<CR>
 if ! hasmapto('<Plug>SearchPositionCurrent', 'v')
-    vmap <silent> <A-n> <Plug>SearchPositionCurrent
+    vmap <A-n> <Plug>SearchPositionCurrent
 endif
 
 nnoremap <silent> <Plug>SearchPositionWholeCword :<C-u>call SearchPosition#SearchPosition((v:count ? line('.') : 0), (v:count ? line('.') + v:count - 1 : 0), SearchPosition#SetCword(1), 1)<CR>
 nnoremap <silent> <Plug>SearchPositionCword	 :<C-u>call SearchPosition#SearchPosition((v:count ? line('.') : 0), (v:count ? line('.') + v:count - 1 : 0), SearchPosition#SetCword(0), 1)<CR>
 if ! hasmapto('<Plug>SearchPositionWholeCword', 'n')
-    nmap <silent> <A-m> <Plug>SearchPositionWholeCword
+    nmap <A-m> <Plug>SearchPositionWholeCword
 endif
 if ! hasmapto('<Plug>SearchPositionCword', 'n')
-    nmap <silent> g<A-m> <Plug>SearchPositionCword
+    nmap g<A-m> <Plug>SearchPositionCword
 endif
 vnoremap <silent> <Plug>SearchPositionCword :<C-u>:call SearchPosition#SearchPosition(0, 0, substitute(ingointegration#GetVisualSelection(), "\n", '\\n', 'g'), 1)<CR>
 if ! hasmapto('<Plug>SearchPositionCword', 'v')
-    vmap <silent> <A-m> <Plug>SearchPositionCword
+    vmap <A-m> <Plug>SearchPositionCword
 endif
 
 " vim: set sts=4 sw=4 noexpandtab ff=unix fdm=syntax :
