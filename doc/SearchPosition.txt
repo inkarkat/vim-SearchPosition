@@ -129,6 +129,9 @@ IDEAS							*SearchPosition-ideas*
 ==============================================================================
 HISTORY						      *SearchPosition-history*
 
+1.15	30-Sep-2011
+- Use <silent> for <Plug> mapping instead of default mapping. 
+
 1.14	12-Sep-2011
 - Reuse: Use ingointegration#GetVisualSelection() instead of inline capture. 
 
