@@ -1,4 +1,4 @@
-*SearchPosition.txt*    Show relation to search pattern matches in range or buffer. 
+*SearchPosition.txt*    Show relation to search pattern matches in range or buffer.
 
 		      SEARCH POSITION    by Ingo Karkat
 							  *SearchPosition.vim*
@@ -17,7 +17,7 @@ DESCRIPTION					  *SearchPosition-description*
 The mappings, command and operator provided by this plugin search a range or
 the entire buffer for a pattern (defaulting to the current search pattern),
 and print a summary of the number of occurrences above, below and on the
-current line, e.g.: 
+current line, e.g.:
     1 match after cursor in this line, 8 following, 2 in previous lines; ~
 	total 10 for /\<SearchPosition\>/ ~
     5 matches in this fold, 9 before, 6 following; total 21 for /endif/ ~
@@ -25,7 +25,7 @@ current line, e.g.:
     :144,172 7 matches in this fold for /let/ ~
 
 This provides better orientation in a buffer without having to first jump from
-search result to search result. 
+search result to search result.
 
 MOTIVATION					   *SearchPosition-motivation*
 
@@ -34,10 +34,10 @@ In its simplest implementation >
 <   41 matches on 17 lines ~
 prints the number of matches for the current search pattern. This plugin
 builds on top of this by providing more context with regards to the current
-cursor position plus additional information. 
+cursor position plus additional information.
 
 This plugin is similar to IndexedSearch.vim (vimscript#1682) by Yakov
-Lerner. 
+Lerner.
 
 ==============================================================================
 USAGE							*SearchPosition-usage*
@@ -48,34 +48,34 @@ USAGE							*SearchPosition-usage*
 			omitted). All lines in [range] (or the entire buffer
 			if omitted) are considered, and the number of matches
 			in relation to the current cursor position is echoed
-			to the command line. 
+			to the command line.
 							     *ALT-N* *v_ALT-N*
 <Leader><A-n>{motion}	Show position for the current search pattern in the
-			lines covered by {motion}. 
+			lines covered by {motion}.
 [count]<A-n>		Show position for the current search pattern in the
-			entire buffer, or [count] following lines. 
+			entire buffer, or [count] following lines.
 {Visual}<A-n>		Show position for the current search pattern in the
-			selected lines. 
+			selected lines.
 
 			The default mapping <A-n> was chosen because one often
 			invokes this when jumping to matches via n/N, so <A-n>
 			is easy to reach. Imagine 'n' stood for "next
-			searches". 
+			searches".
 							     *ALT-M* *v_ALT-M*
 [count]<A-m>		Show position for the whole word under the cursor in
-			the entire buffer, or [count] following lines. 
+			the entire buffer, or [count] following lines.
 			Only whole keywords are searched for, like with the
-			|star| command. 
+			|star| command.
 [count]g<A-m>		Show position for the word under the cursor in the
-			entire buffer, or [count] following lines. 
-			Also finds contained matches, like |gstar|. 
+			entire buffer, or [count] following lines.
+			Also finds contained matches, like |gstar|.
 
 {Visual}<A-m>		Show position for the selected text in the entire
-			buffer. 
+			buffer.
 
-			Imagine 'm' stood for "more occurrences". 
+			Imagine 'm' stood for "more occurrences".
 			These mappings reuse the last used <cword> when issued
-			on a blank line. 
+			on a blank line.
 
 ==============================================================================
 INSTALLATION					 *SearchPosition-installation*
@@ -86,14 +86,23 @@ the archive first, e.g. using WinZip. Inside Vim, install by sourcing the
 vimball or via the |:UseVimball| command. >
     vim SearchPosition.vba.gz
     :so %
-To uninstall, use the |:RmVimball| command. 
+To uninstall, use the |:RmVimball| command.
 
 DEPENDENCIES					 *SearchPosition-dependencies*
 
-- Requires Vim 7.0 or higher. 
+- Requires Vim 7.0 or higher.
 
 ==============================================================================
 CONFIGURATION					*SearchPosition-configuration*
+
+The highlight group for the report message can be set via >
+    let g:SearchPosition_HighlightGroup = 'ModeMsg'
+<
+To shorten the report message, the [range] and used search pattern can be
+omitted from the message; by default, both are included in the message text: >
+    let g:SearchPosition_ShowRange = 1
+    let g:SearchPosition_ShowPattern = 1
+<
 
 If you want to use different mappings, map your keys to the
 <Plug>SearchPosition* mapping targets _before_ sourcing this script (e.g. in
@@ -105,20 +114,11 @@ your |vimrc|): >
     vmap <silent> <Leader>m <Plug>SearchPositionCword
     nmap <silent> <Leader>M <Plug>SearchPositionCword
 
-
-The highlight group for the report message can be set via >
-    let g:SearchPosition_HighlightGroup = 'ModeMsg'
-<
-To shorten the report message, the [range] and used search pattern can be
-omitted from the message; by default, both are included in the message text: >
-    let g:SearchPosition_ShowRange = 1
-    let g:SearchPosition_ShowPattern = 1
-<
 ==============================================================================
 LIMITATIONS					  *SearchPosition-limitations*
 
 - The summary always includes full lines, even if {motion} or the visual
-  selection cover only parts of lines. 
+  selection cover only parts of lines.
 
 KNOWN PROBLEMS				       *SearchPosition-known-problems*
 
@@ -130,24 +130,24 @@ IDEAS							*SearchPosition-ideas*
 HISTORY						      *SearchPosition-history*
 
 1.15	30-Sep-2011
-- Use <silent> for <Plug> mapping instead of default mapping. 
+- Use <silent> for <Plug> mapping instead of default mapping.
 
 1.14	12-Sep-2011
-- Reuse: Use ingointegration#GetVisualSelection() instead of inline capture. 
+- Reuse: Use ingointegration#GetVisualSelection() instead of inline capture.
 
 1.13	08-Oct-2010
 - BUG: The previous fix for the incorrect reporting of sole match in folded
   line was susceptible to non-local matches when current line is the first
-  line. 
+  line.
 
 1.12	08-Oct-2010
 - BUG: Visual mode <A-m> /Plug>SearchPositionCword mapping on multi-line
-  selection searched for ^@, not the newline character \n. 
+  selection searched for ^@, not the newline character \n.
 - BUG: Incorrect reporting of sole match in folded line when the current line
   is empty and the pattern starts matching a newline character.
 - Using SearchPosition#SavePosition() instead ofVim version-dependent) mark to
   keep the cursor at the position where the operator was invokedonly necessary
-  with a backward {motion}). 
+  with a backward {motion}).
 
 1.11	02-Jun-2010
 Appended "; total N" to evaluations that excluded the match on the cursor from
@@ -157,31 +157,31 @@ context.
 1.10	08-Jan-2010
 - Moved functions from plugin to separate autoload script.
 - BUG: Wrong reporting of additional occurrences when the current line is
-  outside the passed range. 
+  outside the passed range.
 - BUG: Catch non-existing items in evaluations that can be caused by e.g.
   having \%# inside the search pattern. Warn about "special atoms have
-  distorted the tally" in such cases. 
+  distorted the tally" in such cases.
 
 1.03	05-Jan-2010
 ENH: Offering a whole-word ALT-M mapping in addition to the former literal
-search (which is now mapped to g_ALT-M), like the |star| and |gstar| commands. 
+search (which is now mapped to g_ALT-M), like the |star| and |gstar| commands.
 
 1.02	11-Sep-2009
 BUG: Cannot set mark " in Vim 7.0 and 7.1; using mark z instead. This only
-affected the <Leader><A-n>{motion} command. 
+affected the <Leader><A-n>{motion} command.
 
 1.01	19-Jun-2009
-The jumplist is not clobbered anymore by the :SearchPosition command. 
+The jumplist is not clobbered anymore by the :SearchPosition command.
 
 1.00	15-May-2009
-First published version. 
+First published version.
 
 0.01	07-Aug-2008
-Started development. 
+Started development.
 
 ==============================================================================
 Copyright: (C) 2009-2010 Ingo Karkat
-The VIM LICENSE applies to this script; see |copyright|. 
+The VIM LICENSE applies to this script; see |copyright|.
 
 Maintainer:	Ingo Karkat <ingo@karkat.de>
 ==============================================================================
