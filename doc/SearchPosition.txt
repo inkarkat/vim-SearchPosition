@@ -95,9 +95,13 @@ DEPENDENCIES					 *SearchPosition-dependencies*
 ==============================================================================
 CONFIGURATION					*SearchPosition-configuration*
 
+For a permanent configuration, put the following commands into your |vimrc|:
+
+					     *g:SearchPosition_HighlightGroup*
 The highlight group for the report message can be set via >
     let g:SearchPosition_HighlightGroup = 'ModeMsg'
 <
+		   *g:SearchPosition_ShowRange* *g:SearchPosition_ShowPattern*
 To shorten the report message, the [range] and used search pattern can be
 omitted from the message; by default, both are included in the message text: >
     let g:SearchPosition_ShowRange = 1
@@ -105,14 +109,14 @@ omitted from the message; by default, both are included in the message text: >
 <
 
 If you want to use different mappings, map your keys to the
-<Plug>SearchPosition* mapping targets _before_ sourcing this script (e.g. in
+<Plug>SearchPosition* mapping targets _before_ sourcing the script (e.g. in
 your |vimrc|): >
-    nmap <silent> <Leader>,n <Plug>SearchPositionOperator
-    nmap <silent> <Leader>n <Plug>SearchPositionCurrent
-    vmap <silent> <Leader>n <Plug>SearchPositionCurrent
-    nmap <silent> <Leader>m <Plug>SearchPositionWholeCword
-    vmap <silent> <Leader>m <Plug>SearchPositionCword
-    nmap <silent> <Leader>M <Plug>SearchPositionCword
+    nmap <Leader>,n <Plug>SearchPositionOperator
+    nmap <Leader>n <Plug>SearchPositionCurrent
+    vmap <Leader>n <Plug>SearchPositionCurrent
+    nmap <Leader>m <Plug>SearchPositionWholeCword
+    vmap <Leader>m <Plug>SearchPositionCword
+    nmap <Leader>M <Plug>SearchPositionCword
 
 ==============================================================================
 LIMITATIONS					  *SearchPosition-limitations*
