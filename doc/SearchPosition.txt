@@ -15,7 +15,7 @@ history				|SearchPosition-history|
 DESCRIPTION					  *SearchPosition-description*
 
 The mappings, command and operator provided by this plugin search a range or
-the entire buffer for a pattern (defaulting to the current search pattern),
+the entire buffer for a pattern (defaulting to the last search pattern),
 and print a summary of the number of occurrences above, below and on the
 current line, e.g.:
     1 match after cursor in this line, 8 following, 2 in previous lines; ~
@@ -32,7 +32,7 @@ MOTIVATION					   *SearchPosition-motivation*
 In its simplest implementation >
     :nnoremap <A-n> :%s///gn<CR>
 <   41 matches on 17 lines ~
-prints the number of matches for the current search pattern. This plugin
+prints the number of matches for the last search pattern. This plugin
 builds on top of this by providing more context with regards to the current
 cursor position plus additional information.
 
@@ -44,17 +44,17 @@ USAGE							*SearchPosition-usage*
 							     *:SearchPosition*
 :[range]SearchPosition [{pattern}]
 			Show position of the search results for {pattern} (or
-			the current search pattern (@/) if {pattern} is
+			the last search pattern (|quote/|) if {pattern} is
 			omitted). All lines in [range] (or the entire buffer
 			if omitted) are considered, and the number of matches
 			in relation to the current cursor position is echoed
 			to the command line.
 							     *ALT-N* *v_ALT-N*
-<Leader><A-n>{motion}	Show position for the current search pattern in the
+<Leader><A-n>{motion}	Show position for the last search pattern in the
 			lines covered by {motion}.
-[count]<A-n>		Show position for the current search pattern in the
+[count]<A-n>		Show position for the last search pattern in the
 			entire buffer, or [count] following lines.
-{Visual}<A-n>		Show position for the current search pattern in the
+{Visual}<A-n>		Show position for the last search pattern in the
 			selected lines.
 
 			The default mapping <A-n> was chosen because one often
