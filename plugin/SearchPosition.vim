@@ -115,4 +115,4 @@ if ! hasmapto('<Plug>SearchPositionCword', 'v')
     vmap <A-m> <Plug>SearchPositionCword
 endif
 
-" vim: set sts=4 sw=4 noexpandtab ff=unix fdm=syntax :
+" vim: set ts=8 sts=4 sw=4 noexpandtab ff=unix fdm=syntax :
