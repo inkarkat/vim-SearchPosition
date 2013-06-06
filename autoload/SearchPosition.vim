@@ -1,26 +1,27 @@
-" SearchPosition.vim: Show relation to search pattern matches in range or buffer. 
+" SearchPosition.vim: Show relation to search pattern matches in range or buffer.
 "
 " DEPENDENCIES:
-"   - ingosearch.vim autoload script. 
+"   - ingo/regexp.vim autoload script
 "   - EchoWithoutScrolling.vim autoload script (optional, only for showing
-"     pattern). 
+"     pattern).
 "
-" Copyright: (C) 2008-2010 by Ingo Karkat
-"   The VIM LICENSE applies to this script; see ':help copyright'. 
+" Copyright: (C) 2008-2013 Ingo Karkat
+"   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
-" REVISION	DATE		REMARKS 
+" REVISION	DATE		REMARKS
+"   1.16.005	24-May-2013	Move ingosearch.vim to ingo-library.
 "   1.13.004	08-Oct-2010	BUG: The previous fix for the incorrect
 "				reporting of sole match in folded line was
 "				susceptible to non-local matches when current
 "				line is the first line. Fixed by explicitly
-"				checking resulting line number of search(). 
+"				checking resulting line number of search().
 "				line when the current line is empty
 "   1.12.003	08-Oct-2010	Using SearchPosition#SavePosition() instead of
 "				(Vim version-dependent) mark to keep the cursor
 "				at the position where the operator was invoked
-"				(only necessary with a backward {motion}). 
+"				(only necessary with a backward {motion}).
 "				BUG: Incorrect reporting of sole match in folded
 "				line when the current line is empty and the
 "				pattern starts matching a newline character.
@@ -28,11 +29,11 @@
 "				pattern that starts with a newline character on
 "				an empty line. We have to move to the last
 "				character on the line before the empty line to
-"				achieve the match. 
+"				achieve the match.
 "   1.11.002	02-Jun-2010	Appended "; total N" to evaluations that
 "				excluded the match on the cursor from the
 "				"overall" count, as it was misleading what
-"				"overall" meant in this context. 
+"				"overall" meant in this context.
 "   1.10.001	08-Jan-2010	Moved functions from plugin to separate autoload
 "				script.
 "				file creation
@@ -54,58 +55,58 @@ function! s:GetMatchesCnt( range, pattern )
 
     return l:matchesCnt
 endfunction
-" The position in the key is a boolean (0/1) whether there are any matches. 
-" The placeholder {N} will be filled with the actual number, where N is: 
+" The position in the key is a boolean (0/1) whether there are any matches.
+" The placeholder {N} will be filled with the actual number, where N is:
 " 1: matches before line, 2: matches current line, 3: matches after line,
 " 4: before cursor, 5: exact on cursor, 6: after cursor in current line
 "
-" Terminology: 
+" Terminology:
 " "overall" is used when all matches are limited to a certain partition of the
-" range, e.g. all before the cursor (and thus none on or after the cursor). 
+" range, e.g. all before the cursor (and thus none on or after the cursor).
 " "total" is used when there's no such partition; matches are scattered
-" throughout the range. 
-" Example: 
+" throughout the range.
+" Example:
 "6 = /4
 "   2 | 1
 "     2/ = 3
 "   2 matches before and 1 after cursor in this line, 6 and 3 overall; total 9
 let s:evaluation = {
-\   '000000': 'No matches', 
-\   '001000': '{3} matches after this line', 
-\   '010000': '{2} matches in this fold', 
-\   '010001': '{6} matches after cursor in this line', 
-\   '010010': 'On sole match', 
-\   '010011': 'On first match, {6} after cursor in this line', 
-\   '010100': '{4} matches before cursor in this line', 
-\   '010101': '{4} matches before and {6} after cursor in this line; total {2}', 
-\   '010110': 'On last match, {4} before cursor in this line', 
-\   '010111': 'On match, {4} before and {6} after cursor in this line; total {2}', 
-\   '011000': '{2} matches in this fold, {3} following; total {2+3}', 
-\   '011001': '{6} matches after cursor in this line, {3+6} overall', 
-\   '011010': 'On sole match in this line, {3} in following lines', 
-\   '011011': 'On first match, {6} following in line, {3+6} overall; total {2+3}', 
-\   '011100': '{4} matches before cursor in this line, {3} in following lines; total {2+3}', 
-\   '011101': '{4} matches before and {6} after cursor in this line, {3} in following lines; total {2+3}', 
-\   '011110': 'On last match of {4+5} in this line, {3} in following lines; total {2+3}', 
-\   '011111': 'On match, {4+5+6} in this line, {3} in following lines; total {2+3}', 
-\   '100000': '{1} matches before this line', 
-\   '101000': '{1} matches before and {3} after this line; total {1+3}', 
-\   '110000': '{2} matches in this fold, {1} before; total {1+2}', 
-\   '110001': '{6} matches after cursor in this line, {1} in previous lines; total {1+2}', 
-\   '110010': 'On sole match in this line, {1} in previous lines', 
-\   '110011': 'On first match of {5+6} in this line, {1} in previous lines; total {1+2}', 
-\   '110100': '{4} matches before cursor in this line, {1+4} overall', 
-\   '110101': '{4} matches before and {6} after cursor in this line, {1} in previous lines; total {1+2}', 
-\   '110110': 'On last match, {4} previous in line, {1+4} overall; total {1+2}', 
-\   '110111': 'On match, {4+5+6} in this line, {1} in previous lines; total {1+2}', 
-\   '111000': '{2} matches in this fold, {1} before, {3} following; total {1+2+3}', 
-\   '111001': '{6} matches after cursor in this line, {3+6} following, {1} in previous lines; total {1+2+3}', 
-\   '111010': 'On sole match in this line, {1} before and {3} after this line; total {1+2+3}', 
-\   '111011': 'On first match of {5+6} in this line, {1} before and {3+6} following; total {1+2+3}', 
-\   '111100': '{4} matches before cursor in this line, {1+4} before overall, {3} after this line; total {1+2+3}', 
-\   '111101': '{4} matches before and {6} after cursor in this line, {1+4} and {3+6} overall; total {1+2+3}', 
-\   '111110': 'On last match of {4+5} in this line, {1+4} before, {3} in following lines; total {1+2+3}', 
-\   '111111': 'On match, {4+5+6} in this line, {1+4} before, {3+6} following; total {1+2+3}', 
+\   '000000': 'No matches',
+\   '001000': '{3} matches after this line',
+\   '010000': '{2} matches in this fold',
+\   '010001': '{6} matches after cursor in this line',
+\   '010010': 'On sole match',
+\   '010011': 'On first match, {6} after cursor in this line',
+\   '010100': '{4} matches before cursor in this line',
+\   '010101': '{4} matches before and {6} after cursor in this line; total {2}',
+\   '010110': 'On last match, {4} before cursor in this line',
+\   '010111': 'On match, {4} before and {6} after cursor in this line; total {2}',
+\   '011000': '{2} matches in this fold, {3} following; total {2+3}',
+\   '011001': '{6} matches after cursor in this line, {3+6} overall',
+\   '011010': 'On sole match in this line, {3} in following lines',
+\   '011011': 'On first match, {6} following in line, {3+6} overall; total {2+3}',
+\   '011100': '{4} matches before cursor in this line, {3} in following lines; total {2+3}',
+\   '011101': '{4} matches before and {6} after cursor in this line, {3} in following lines; total {2+3}',
+\   '011110': 'On last match of {4+5} in this line, {3} in following lines; total {2+3}',
+\   '011111': 'On match, {4+5+6} in this line, {3} in following lines; total {2+3}',
+\   '100000': '{1} matches before this line',
+\   '101000': '{1} matches before and {3} after this line; total {1+3}',
+\   '110000': '{2} matches in this fold, {1} before; total {1+2}',
+\   '110001': '{6} matches after cursor in this line, {1} in previous lines; total {1+2}',
+\   '110010': 'On sole match in this line, {1} in previous lines',
+\   '110011': 'On first match of {5+6} in this line, {1} in previous lines; total {1+2}',
+\   '110100': '{4} matches before cursor in this line, {1+4} overall',
+\   '110101': '{4} matches before and {6} after cursor in this line, {1} in previous lines; total {1+2}',
+\   '110110': 'On last match, {4} previous in line, {1+4} overall; total {1+2}',
+\   '110111': 'On match, {4+5+6} in this line, {1} in previous lines; total {1+2}',
+\   '111000': '{2} matches in this fold, {1} before, {3} following; total {1+2+3}',
+\   '111001': '{6} matches after cursor in this line, {3+6} following, {1} in previous lines; total {1+2+3}',
+\   '111010': 'On sole match in this line, {1} before and {3} after this line; total {1+2+3}',
+\   '111011': 'On first match of {5+6} in this line, {1} before and {3+6} following; total {1+2+3}',
+\   '111100': '{4} matches before cursor in this line, {1+4} before overall, {3} after this line; total {1+2+3}',
+\   '111101': '{4} matches before and {6} after cursor in this line, {1+4} and {3+6} overall; total {1+2+3}',
+\   '111110': 'On last match of {4+5} in this line, {1+4} before, {3} in following lines; total {1+2+3}',
+\   '111111': 'On match, {4+5+6} in this line, {1+4} before, {3+6} following; total {1+2+3}',
 \}
 function! s:ResolveParameters( matchResults, placeholder )
     let l:result = 0
@@ -128,7 +129,7 @@ endfunction
 function! s:Report( line1, line2, pattern, evaluation )
     let [l:isSuccessful, l:evaluationText] = a:evaluation
 
-    redraw  " This is necessary because of the :redir done earlier. 
+    redraw  " This is necessary because of the :redir done earlier.
     echo ''
 
     let l:range = ''
@@ -141,7 +142,7 @@ function! s:Report( line1, line2, pattern, evaluation )
 	endif
 	if ! empty(l:range)
 	    let l:range = ':' . l:range . ' '
-	    echon l:range 
+	    echon l:range
 	endif
     endif
 
@@ -150,7 +151,7 @@ function! s:Report( line1, line2, pattern, evaluation )
 	let l:pattern = EchoWithoutScrolling#TranslateLineBreaks('/' . (empty(a:pattern) ? @/ : escape(a:pattern, '/')) . '/')
     endif
 
-    execute 'echohl' (l:isSuccessful ? 
+    execute 'echohl' (l:isSuccessful ?
     \	empty(g:SearchPosition_HighlightGroup) ? 'None' : g:SearchPosition_HighlightGroup :
     \	'WarningMsg'
     \)
@@ -161,7 +162,7 @@ function! s:Report( line1, line2, pattern, evaluation )
 	" Assumption: The evaluation message only contains printable ASCII
 	" characters; we can thus simple use strlen() to determine the number of
 	" occupied virtual columns. Otherwise,
-	" EchoWithoutScrolling#DetermineVirtColNum() could be used. 
+	" EchoWithoutScrolling#DetermineVirtColNum() could be used.
 	echon EchoWithoutScrolling#Truncate( ' for ' . l:pattern, (strlen(l:range) + strlen(l:evaluationText)) )
     endif
     if ! l:isSuccessful | echohl None | endif
@@ -172,15 +173,15 @@ function! SearchPosition#SearchPosition( line1, line2, pattern, isLiteral )
     " If the end of range is in a closed fold, Vim processes all lines inside
     " the fold, even when '.' or a fixed line number has been specified. We
     " correct the end line merely for output cosmetics, as the calculation is
-    " not affected by this. 
+    " not affected by this.
     let l:endLine = (foldclosed(l:endLine) == -1 ? l:endLine : foldclosedend(l:endLine))
 "****D echomsg '****' a:line1 a:line2
 "****D echomsg '****' l:startLine l:endLine
 
-    " Skip processing if there is no pattern. 
+    " Skip processing if there is no pattern.
     if empty(a:pattern) && (a:isLiteral || empty(@/))
 	" Using an empty pattern would cause the previously used search pattern
-	" to be used (if there is any). 
+	" to be used (if there is any).
 	echohl ErrorMsg
 	let v:errmsg = (a:isLiteral ? 'Nothing selected' : 'E35: No previous regular expression')
 	echomsg v:errmsg
@@ -195,13 +196,13 @@ function! SearchPosition#SearchPosition( line1, line2, pattern, isLiteral )
     let l:isCursorInsideRange = (l:cursorLine >= l:startLine && l:cursorLine <= l:endLine)
 
     " This triple records matches relative to the current line or current closed
-    " fold. 
+    " fold.
     let l:matchesBefore = 0
     let l:matchesCurrent = 0
     let l:matchesAfter = 0
 
     if l:cursorLine >= l:startLine
-	let l:lineBeforeCurrent = (l:isCursorInsideRange ? 
+	let l:lineBeforeCurrent = (l:isCursorInsideRange ?
 	\   (l:isCursorOnClosedFold ? foldclosed(l:cursorLine) : l:cursorLine) - 1 :
 	\   l:endLine
 	\)
@@ -212,9 +213,9 @@ function! SearchPosition#SearchPosition( line1, line2, pattern, isLiteral )
 
     if l:isCursorInsideRange
 	" The range '.' represents either the current line or the entire current
-	" closed fold. 
+	" closed fold.
 	" We're not interested in matches on the current line if it's outside
-	" the range to be examined. 
+	" the range to be examined.
 	let l:matchesCurrent = s:GetMatchesCnt('.', a:pattern)
     endif
 
@@ -235,12 +236,12 @@ function! SearchPosition#SearchPosition( line1, line2, pattern, isLiteral )
     if ! l:isCursorOnClosedFold && l:isCursorInsideRange
 	" We're not interested in matches on the current line if we're on a
 	" closed fold; this would be just too much information. The user can
-	" quickly open the fold and re-run the command if he's interested. 
+	" quickly open the fold and re-run the command if he's interested.
 	" We're also not interested if the current line is outside the passed
-	" range. 
+	" range.
 	call cursor(l:cursorLine, 1)
 	" This triple records matches only in the current line (not current fold!),
-	" split into before, on, and after cursor position. 
+	" split into before, on, and after cursor position.
 	while search( a:pattern, (l:before + l:exact + l:after ? '' : 'c'), l:cursorLine )
 	    let l:matchVirtCol = virtcol('.')
 	    if l:matchVirtCol < l:cursorVirtCol
@@ -251,19 +252,19 @@ function! SearchPosition#SearchPosition( line1, line2, pattern, isLiteral )
 		let l:after += 1
 	    else
 		throw 'ASSERT: false'
-	    endif 
+	    endif
 	endwhile
 
 	" search() doesn't match a pattern that starts with a newline character
 	" on an empty line. We have to move to the last character on the line
-	" before the empty line to achieve the match. 
+	" before the empty line to achieve the match.
 	"
 	" Detect this special case when the current line is empty and there were
 	" no matches. Without this special handling, SearchPosition would deduce
-	" that the current line is inside a fold. 
+	" that the current line is inside a fold.
 	if empty(getline(l:cursorLine)) && (l:before + l:exact + l:after) == 0
 	    " Moving to the previous character must be handled differently when
-	    " on the first line; in that case, we need wrap-around enabled. 
+	    " on the first line; in that case, we need wrap-around enabled.
 	    let [l:adaptionMovement, l:searchFlags, l:searchStopLine] =
 	    \	(l:cursorLine == 1 ?
 	    \	    ['G$', 'w', 0] :
@@ -275,11 +276,11 @@ function! SearchPosition#SearchPosition( line1, line2, pattern, isLiteral )
 	    " or more after it, the line number is the one before or the current
 	    " line. This check is only needed for a match on the first line, as
 	    " we use a stopline for all other searches that do not need to wrap
-	    " around. 
+	    " around.
 	    if l:matchLine == l:cursorLine - 1 || l:matchLine == l:cursorLine
 		" On an empty line, the cursor is usually on the newline
 		" character, but it can be after it (= match before cursor) if
-		" 'virtualedit' is set. 
+		" 'virtualedit' is set.
 		if l:cursorVirtCol == 1
 		    let l:exact += 1
 		else
@@ -302,7 +303,7 @@ function! SearchPosition#Operator( type )
     " After the custom operator, the cursor will be positioned at the beginning
     " of the range, so if the motion goes backward, the cursor will move. For
     " this report-only command this is not desired, so we use the saved position
-    " to pin the cursor down. 
+    " to pin the cursor down.
     if getpos('.') != s:savePositionBeforeOperator
 	call setpos('.', s:savePositionBeforeOperator)
     endif
@@ -315,7 +316,7 @@ let s:pattern = ''
 function! SearchPosition#SetCword( isWholeWord )
     let l:cword = expand('<cword>')
     if ! empty(l:cword)
-	let s:pattern = ingosearch#LiteralTextToSearchPattern(l:cword, a:isWholeWord, '')
+	let s:pattern = ingo#regexp#FromLiteralText(l:cword, a:isWholeWord, '')
     endif
     return s:pattern
 endfunction
