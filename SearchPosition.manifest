@@ -1,6 +1,4 @@
 autoload/EchoWithoutScrolling.vim
 autoload/SearchPosition.vim
-autoload/ingointegration.vim
-autoload/ingosearch.vim
 plugin/SearchPosition.vim
 doc/SearchPosition.txt
