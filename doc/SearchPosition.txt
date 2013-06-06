@@ -81,16 +81,18 @@ USAGE							*SearchPosition-usage*
 INSTALLATION					 *SearchPosition-installation*
 
 This script is packaged as a |vimball|. If you have the "gunzip" decompressor
-in your PATH, simply edit the *.vba.gz package in Vim; otherwise, decompress
+in your PATH, simply edit the *.vmb.gz package in Vim; otherwise, decompress
 the archive first, e.g. using WinZip. Inside Vim, install by sourcing the
 vimball or via the |:UseVimball| command. >
-    vim SearchPosition.vba.gz
+    vim SearchPosition*.vmb.gz
     :so %
 To uninstall, use the |:RmVimball| command.
 
 DEPENDENCIES					 *SearchPosition-dependencies*
 
 - Requires Vim 7.0 or higher.
+- Requires the |ingo-library.vim| plugin (vimscript #4433), version 1.006 or
+  higher.
 
 ==============================================================================
 CONFIGURATION					*SearchPosition-configuration*
@@ -132,6 +134,9 @@ IDEAS							*SearchPosition-ideas*
 
 ==============================================================================
 HISTORY						      *SearchPosition-history*
+
+1.16	RELEASEME
+- Add dependency to ingo-library (vimscript #4433).
 
 1.15	30-Sep-2011
 - Use <silent> for <Plug> mapping instead of default mapping.
@@ -184,7 +189,7 @@ First published version.
 Started development.
 
 ==============================================================================
-Copyright: (C) 2009-2010 Ingo Karkat
+Copyright: (C) 2009-2013 Ingo Karkat
 The VIM LICENSE applies to this plugin; see |copyright|.
 
 Maintainer:	Ingo Karkat <ingo@karkat.de>
