@@ -1,9 +1,8 @@
 " SearchPosition.vim: Show relation to search pattern matches in range or buffer.
 "
 " DEPENDENCIES:
+"   - ingo/avoidprompt.vim autoload script
 "   - ingo/regexp.vim autoload script
-"   - EchoWithoutScrolling.vim autoload script (optional, only for showing
-"     pattern).
 "
 " Copyright: (C) 2008-2013 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
@@ -11,6 +10,7 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.16.006	07-Jun-2013	Move EchoWithoutScrolling.vim into ingo-library.
 "   1.16.005	24-May-2013	Move ingosearch.vim to ingo-library.
 "   1.13.004	08-Oct-2010	BUG: The previous fix for the incorrect
 "				reporting of sole match in folded line was
@@ -148,7 +148,7 @@ function! s:Report( line1, line2, pattern, evaluation )
 
     let l:pattern = ''
     if g:SearchPosition_ShowPattern
-	let l:pattern = EchoWithoutScrolling#TranslateLineBreaks('/' . (empty(a:pattern) ? @/ : escape(a:pattern, '/')) . '/')
+	let l:pattern = ingo#avoidprompt#TranslateLineBreaks('/' . (empty(a:pattern) ? @/ : escape(a:pattern, '/')) . '/')
     endif
 
     execute 'echohl' (l:isSuccessful ?
@@ -161,9 +161,9 @@ function! s:Report( line1, line2, pattern, evaluation )
     if ! empty(l:pattern)
 	" Assumption: The evaluation message only contains printable ASCII
 	" characters; we can thus simple use strlen() to determine the number of
-	" occupied virtual columns. Otherwise,
-	" EchoWithoutScrolling#DetermineVirtColNum() could be used.
-	echon EchoWithoutScrolling#Truncate( ' for ' . l:pattern, (strlen(l:range) + strlen(l:evaluationText)) )
+	" occupied virtual columns. Otherwise, ingo#compat#strdisplaywidth()
+	" could be used.
+	echon ingo#avoidprompt#Truncate( ' for ' . l:pattern, (strlen(l:range) + strlen(l:evaluationText)) )
     endif
     if ! l:isSuccessful | echohl None | endif
 endfunction
