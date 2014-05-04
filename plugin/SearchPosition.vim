@@ -2,15 +2,16 @@
 "
 " DEPENDENCIES:
 "   - Requires Vim 7.0 or higher.
-"   - SearchPosition.vim autoload script.
+"   - SearchPosition.vim autoload script
 "   - ingo/selection.vim autoload script
 "
-" Copyright: (C) 2008-2013 Ingo Karkat
+" Copyright: (C) 2008-2014 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.16.017	05-May-2014	Abort commands and mappings on error.
 "   1.16.016	24-May-2013	Move ingointegration#GetVisualSelection() into
 "				ingo-library.
 "   1.15.015	30-Sep-2011	Use <silent> for <Plug> mapping instead of
@@ -75,6 +76,7 @@ endif
 let g:loaded_SearchPosition = 1
 
 "- configuration --------------------------------------------------------------
+
 if ! exists('g:SearchPosition_HighlightGroup')
     let g:SearchPosition_HighlightGroup = 'ModeMsg'
 endif
@@ -87,7 +89,8 @@ endif
 
 
 "- commands and mappings ------------------------------------------------------
-command! -range=% -nargs=? SearchPosition call SearchPosition#SearchPosition(<line1>, <line2>, <q-args>, 0)
+
+command! -range=% -nargs=? SearchPosition if ! SearchPosition#SearchPosition(<line1>, <line2>, <q-args>, 0) | echoerr ingo#err#Get() | endif
 
 nnoremap <silent> <Plug>SearchPositionOperator :<C-u>call SearchPosition#SavePosition()<Bar>set opfunc=SearchPosition#Operator<CR>g@
 if ! hasmapto('<Plug>SearchPositionOperator', 'n')
@@ -104,15 +107,15 @@ if ! hasmapto('<Plug>SearchPositionCurrent', 'v')
     vmap <A-n> <Plug>SearchPositionCurrent
 endif
 
-nnoremap <silent> <Plug>SearchPositionWholeCword :<C-u>call SearchPosition#SearchPosition((v:count ? line('.') : 0), (v:count ? line('.') + v:count - 1 : 0), SearchPosition#SetCword(1), 1)<CR>
-nnoremap <silent> <Plug>SearchPositionCword	 :<C-u>call SearchPosition#SearchPosition((v:count ? line('.') : 0), (v:count ? line('.') + v:count - 1 : 0), SearchPosition#SetCword(0), 1)<CR>
+nnoremap <silent> <Plug>SearchPositionWholeCword :<C-u>if ! SearchPosition#SearchPosition((v:count ? line('.') : 0), (v:count ? line('.') + v:count - 1 : 0), SearchPosition#SetCword(1), 1)<Bar>echoerr ingo#err#Get()<Bar>endif<CR>
+nnoremap <silent> <Plug>SearchPositionCword	 :<C-u>if ! SearchPosition#SearchPosition((v:count ? line('.') : 0), (v:count ? line('.') + v:count - 1 : 0), SearchPosition#SetCword(0), 1)<Bar>echoerr ingo#err#Get()<Bar>endif<CR>
 if ! hasmapto('<Plug>SearchPositionWholeCword', 'n')
     nmap <A-m> <Plug>SearchPositionWholeCword
 endif
 if ! hasmapto('<Plug>SearchPositionCword', 'n')
     nmap g<A-m> <Plug>SearchPositionCword
 endif
-vnoremap <silent> <Plug>SearchPositionCword :<C-u>:call SearchPosition#SearchPosition(0, 0, substitute(ingo#selection#Get(), "\n", '\\n', 'g'), 1)<CR>
+vnoremap <silent> <Plug>SearchPositionCword      :<C-u>if ! SearchPosition#SearchPosition(0, 0, substitute(ingo#selection#Get(), "\n", '\\n', 'g'), 1)<Bar>echoerr ingo#err#Get()<Bar>endif<CR>
 if ! hasmapto('<Plug>SearchPositionCword', 'v')
     vmap <A-m> <Plug>SearchPositionCword
 endif
