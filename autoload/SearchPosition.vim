@@ -10,6 +10,8 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.16.007	14-Jun-2013	Minor: Make substitute() robust against
+"				'ignorecase'.
 "   1.16.006	07-Jun-2013	Move EchoWithoutScrolling.vim into ingo-library.
 "   1.16.005	24-May-2013	Move ingosearch.vim to ingo-library.
 "   1.13.004	08-Oct-2010	BUG: The previous fix for the incorrect
@@ -124,7 +126,7 @@ function! s:Evaluate( matchResults )
 
     let l:evaluation = s:evaluation[ l:matchVector ]
     let l:evaluation = substitute( l:evaluation, '{\%(\d\|+\)\+}', '\=s:ResolveParameters(a:matchResults, submatch(0))', 'g' )
-    return [1, substitute( l:evaluation, '1 matches' , '1 match', 'g' )]
+    return [1, substitute( l:evaluation, '\C1 matches' , '1 match', 'g' )]
 endfunction
 function! s:Report( line1, line2, pattern, evaluation )
     let [l:isSuccessful, l:evaluationText] = a:evaluation
