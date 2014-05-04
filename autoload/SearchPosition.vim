@@ -4,12 +4,13 @@
 "   - ingo/avoidprompt.vim autoload script
 "   - ingo/regexp.vim autoload script
 "
-" Copyright: (C) 2008-2013 Ingo Karkat
+" Copyright: (C) 2008-2014 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.16.008	05-May-2014	Abort commands and mappings on error.
 "   1.16.007	14-Jun-2013	Minor: Make substitute() robust against
 "				'ignorecase'.
 "   1.16.006	07-Jun-2013	Move EchoWithoutScrolling.vim into ingo-library.
@@ -118,15 +119,15 @@ function! s:ResolveParameters( matchResults, placeholder )
     return l:result
 endfunction
 function! s:Evaluate( matchResults )
-    let l:matchVector = join( map( copy(a:matchResults), '!!v:val' ), '' )
+    let l:matchVector = join(map(copy(a:matchResults), '!!v:val'), '')
 
     if ! has_key(s:evaluation, l:matchVector)
 	return [0, 'Special atoms have distorted the tally']
     endif
 
     let l:evaluation = s:evaluation[ l:matchVector ]
-    let l:evaluation = substitute( l:evaluation, '{\%(\d\|+\)\+}', '\=s:ResolveParameters(a:matchResults, submatch(0))', 'g' )
-    return [1, substitute( l:evaluation, '\C1 matches' , '1 match', 'g' )]
+    let l:evaluation = substitute(l:evaluation, '{\%(\d\|+\)\+}', '\=s:ResolveParameters(a:matchResults, submatch(0))', 'g')
+    return [1, substitute(l:evaluation, '\C1 matches' , '1 match', 'g')]
 endfunction
 function! s:Report( line1, line2, pattern, evaluation )
     let [l:isSuccessful, l:evaluationText] = a:evaluation
@@ -165,9 +166,11 @@ function! s:Report( line1, line2, pattern, evaluation )
 	" characters; we can thus simple use strlen() to determine the number of
 	" occupied virtual columns. Otherwise, ingo#compat#strdisplaywidth()
 	" could be used.
-	echon ingo#avoidprompt#Truncate( ' for ' . l:pattern, (strlen(l:range) + strlen(l:evaluationText)) )
+	echon ingo#avoidprompt#Truncate(' for ' . l:pattern, (strlen(l:range) + strlen(l:evaluationText)))
     endif
     if ! l:isSuccessful | echohl None | endif
+
+    return l:isSuccessful
 endfunction
 function! SearchPosition#SearchPosition( line1, line2, pattern, isLiteral )
     let l:startLine = (a:line1 ? max([a:line1, 1]) : 1)
@@ -184,11 +187,8 @@ function! SearchPosition#SearchPosition( line1, line2, pattern, isLiteral )
     if empty(a:pattern) && (a:isLiteral || empty(@/))
 	" Using an empty pattern would cause the previously used search pattern
 	" to be used (if there is any).
-	echohl ErrorMsg
-	let v:errmsg = (a:isLiteral ? 'Nothing selected' : 'E35: No previous regular expression')
-	echomsg v:errmsg
-	echohl None
-	return
+	call ingo#err#Set(a:isLiteral ? 'Nothing selected' : 'E35: No previous regular expression')
+	return 0
     endif
 
     let l:save_cursor = getpos('.')
@@ -209,7 +209,7 @@ function! SearchPosition#SearchPosition( line1, line2, pattern, isLiteral )
 	\   l:endLine
 	\)
 	if l:lineBeforeCurrent >= l:startLine
-	    let l:matchesBefore = s:GetMatchesCnt( l:startLine . ',' . l:lineBeforeCurrent, a:pattern )
+	    let l:matchesBefore = s:GetMatchesCnt(l:startLine . ',' . l:lineBeforeCurrent, a:pattern)
 	endif
     endif
 
@@ -227,7 +227,7 @@ function! SearchPosition#SearchPosition( line1, line2, pattern, isLiteral )
 	\   l:startLine
 	\)
 	if l:lineAfterCurrent <= l:endLine
-	    let l:matchesAfter = s:GetMatchesCnt( l:lineAfterCurrent . ',' . l:endLine, a:pattern )
+	    let l:matchesAfter = s:GetMatchesCnt(l:lineAfterCurrent . ',' . l:endLine, a:pattern)
 	endif
     endif
 "****D echomsg '****' l:matchesBefore '/' l:matchesCurrent '/' l:matchesAfter
@@ -244,7 +244,7 @@ function! SearchPosition#SearchPosition( line1, line2, pattern, isLiteral )
 	call cursor(l:cursorLine, 1)
 	" This triple records matches only in the current line (not current fold!),
 	" split into before, on, and after cursor position.
-	while search( a:pattern, (l:before + l:exact + l:after ? '' : 'c'), l:cursorLine )
+	while search(a:pattern, (l:before + l:exact + l:after ? '' : 'c'), l:cursorLine)
 	    let l:matchVirtCol = virtcol('.')
 	    if l:matchVirtCol < l:cursorVirtCol
 		let l:before += 1
@@ -295,7 +295,9 @@ function! SearchPosition#SearchPosition( line1, line2, pattern, isLiteral )
 "****D echomsg '****' l:before '/' l:exact '/' l:after
     endif
 
-    call s:Report( l:startLine, l:endLine, a:pattern, s:Evaluate( [l:matchesBefore, l:matchesCurrent, l:matchesAfter, l:before, l:exact, l:after] ) )
+    return s:Report(l:startLine, l:endLine, a:pattern,
+    \   s:Evaluate([l:matchesBefore, l:matchesCurrent, l:matchesAfter, l:before, l:exact, l:after])
+    \)
 endfunction
 
 function! SearchPosition#SavePosition()
@@ -311,7 +313,9 @@ function! SearchPosition#Operator( type )
     endif
     unlet s:savePositionBeforeOperator
 
-    call SearchPosition#SearchPosition(line("'["), line("']"), '', 0)
+    if ! SearchPosition#SearchPosition(line("'["), line("']"), '', 0)
+	call ingo#msg#ErrorMsg(ingo#err#Get())
+    endif
 endfunction
 
 let s:pattern = ''
