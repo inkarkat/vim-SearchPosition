@@ -11,6 +11,8 @@
 "
 " REVISION	DATE		REMARKS
 "   1.16.008	05-May-2014	Abort commands and mappings on error.
+"				Use SearchPosition#OperatorExpr() to also handle
+"				[count] before the operator mapping.
 "   1.16.007	14-Jun-2013	Minor: Make substitute() robust against
 "				'ignorecase'.
 "   1.16.006	07-Jun-2013	Move EchoWithoutScrolling.vim into ingo-library.
@@ -325,6 +327,13 @@ function! SearchPosition#SetCword( isWholeWord )
 	let s:pattern = ingo#regexp#FromLiteralText(l:cword, a:isWholeWord, '')
     endif
     return s:pattern
+endfunction
+
+
+function! SearchPosition#OperatorExpr()
+    call SearchPosition#SavePosition()
+    set opfunc=SearchPosition#Operator
+    return 'g@'
 endfunction
 
 let &cpo = s:save_cpo
