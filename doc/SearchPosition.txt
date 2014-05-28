@@ -136,6 +136,9 @@ IDEAS							*SearchPosition-ideas*
 HISTORY						      *SearchPosition-history*
 
 1.16	RELEASEME
+- Abort commands and mappings on error.
+- Use SearchPosition#OperatorExpr() to also handle [count] before the operator
+  mapping.
 - Add dependency to ingo-library (vimscript #4433).
 
 1.15	30-Sep-2011
@@ -189,7 +192,7 @@ First published version.
 Started development.
 
 ==============================================================================
-Copyright: (C) 2009-2013 Ingo Karkat
+Copyright: (C) 2009-2014 Ingo Karkat
 The VIM LICENSE applies to this plugin; see |copyright|.
 
 Maintainer:	Ingo Karkat <ingo@karkat.de>
