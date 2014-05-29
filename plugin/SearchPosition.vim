@@ -12,6 +12,8 @@
 "
 " REVISION	DATE		REMARKS
 "   1.16.017	05-May-2014	Abort commands and mappings on error.
+"				Use SearchPosition#OperatorExpr() to also handle
+"				[count] before the operator mapping.
 "   1.16.016	24-May-2013	Move ingointegration#GetVisualSelection() into
 "				ingo-library.
 "   1.15.015	30-Sep-2011	Use <silent> for <Plug> mapping instead of
@@ -92,7 +94,7 @@ endif
 
 command! -range=% -nargs=? SearchPosition if ! SearchPosition#SearchPosition(<line1>, <line2>, <q-args>, 0) | echoerr ingo#err#Get() | endif
 
-nnoremap <silent> <Plug>SearchPositionOperator :<C-u>call SearchPosition#SavePosition()<Bar>set opfunc=SearchPosition#Operator<CR>g@
+nnoremap <silent> <expr> <Plug>SearchPositionOperator SearchPosition#OperatorExpr()
 if ! hasmapto('<Plug>SearchPositionOperator', 'n')
     nmap <Leader><A-n> <Plug>SearchPositionOperator
 endif
