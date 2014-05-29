@@ -1,0 +1,11 @@
+:2 No matches for /\<foo\>/
+
+:7,11 No matches for /\<foo\>/
+
+:7,11 No matches for /\<foo\>/
+
+:7,11 No matches for /\<foo\>/
+
+No matches for /\<does-not-exist\>/
+
+:7 No matches for /\<does-not-exist\>/
