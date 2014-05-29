@@ -11,5 +11,9 @@ set virtualedit=all
 normal! 13G$l
 SearchPosition \nT
 
+echomsg 'Test in first, empty line'
+normal! ggO
+SearchPosition \nT
+
 call vimtest#Quit()
 
