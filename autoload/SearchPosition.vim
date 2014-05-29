@@ -10,6 +10,10 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.20.009	29-May-2014	Use
+"				ingo#cmdargs#pattern#ParseUnescapedWithLiteralWholeWord()
+"				to also allow :[range]SearchPosition /{pattern}/
+"				argument syntax with literal whole word search.
 "   1.16.008	05-May-2014	Abort commands and mappings on error.
 "				Use SearchPosition#OperatorExpr() to also handle
 "				[count] before the operator mapping.
@@ -175,6 +179,7 @@ function! s:Report( line1, line2, pattern, evaluation )
     return l:isSuccessful
 endfunction
 function! SearchPosition#SearchPosition( line1, line2, pattern, isLiteral )
+    let l:pattern = ingo#cmdargs#pattern#ParseUnescapedWithLiteralWholeWord(a:pattern)
     let l:startLine = (a:line1 ? max([a:line1, 1]) : 1)
     let l:endLine = (a:line2 ? min([a:line2, line('$')]) : line('$'))
     " If the end of range is in a closed fold, Vim processes all lines inside
@@ -186,7 +191,7 @@ function! SearchPosition#SearchPosition( line1, line2, pattern, isLiteral )
 "****D echomsg '****' l:startLine l:endLine
 
     " Skip processing if there is no pattern.
-    if empty(a:pattern) && (a:isLiteral || empty(@/))
+    if empty(l:pattern) && (a:isLiteral || empty(@/))
 	" Using an empty pattern would cause the previously used search pattern
 	" to be used (if there is any).
 	call ingo#err#Set(a:isLiteral ? 'Nothing selected' : 'E35: No previous regular expression')
@@ -211,7 +216,7 @@ function! SearchPosition#SearchPosition( line1, line2, pattern, isLiteral )
 	\   l:endLine
 	\)
 	if l:lineBeforeCurrent >= l:startLine
-	    let l:matchesBefore = s:GetMatchesCnt(l:startLine . ',' . l:lineBeforeCurrent, a:pattern)
+	    let l:matchesBefore = s:GetMatchesCnt(l:startLine . ',' . l:lineBeforeCurrent, l:pattern)
 	endif
     endif
 
@@ -220,7 +225,7 @@ function! SearchPosition#SearchPosition( line1, line2, pattern, isLiteral )
 	" closed fold.
 	" We're not interested in matches on the current line if it's outside
 	" the range to be examined.
-	let l:matchesCurrent = s:GetMatchesCnt('.', a:pattern)
+	let l:matchesCurrent = s:GetMatchesCnt('.', l:pattern)
     endif
 
     if l:cursorLine <= l:endLine
@@ -229,7 +234,7 @@ function! SearchPosition#SearchPosition( line1, line2, pattern, isLiteral )
 	\   l:startLine
 	\)
 	if l:lineAfterCurrent <= l:endLine
-	    let l:matchesAfter = s:GetMatchesCnt(l:lineAfterCurrent . ',' . l:endLine, a:pattern)
+	    let l:matchesAfter = s:GetMatchesCnt(l:lineAfterCurrent . ',' . l:endLine, l:pattern)
 	endif
     endif
 "****D echomsg '****' l:matchesBefore '/' l:matchesCurrent '/' l:matchesAfter
@@ -246,7 +251,7 @@ function! SearchPosition#SearchPosition( line1, line2, pattern, isLiteral )
 	call cursor(l:cursorLine, 1)
 	" This triple records matches only in the current line (not current fold!),
 	" split into before, on, and after cursor position.
-	while search(a:pattern, (l:before + l:exact + l:after ? '' : 'c'), l:cursorLine)
+	while search(l:pattern, (l:before + l:exact + l:after ? '' : 'c'), l:cursorLine)
 	    let l:matchVirtCol = virtcol('.')
 	    if l:matchVirtCol < l:cursorVirtCol
 		let l:before += 1
@@ -275,7 +280,7 @@ function! SearchPosition#SearchPosition( line1, line2, pattern, isLiteral )
 	    \	    ['k$', 'c', l:cursorLine]
 	    \	)
 	    execute 'normal!' l:adaptionMovement
-	    let l:matchLine = search(a:pattern, l:searchFlags, l:searchStopLine)
+	    let l:matchLine = search(l:pattern, l:searchFlags, l:searchStopLine)
 	    " Depending on whether the pattern matches only a newline character
 	    " or more after it, the line number is the one before or the current
 	    " line. This check is only needed for a match on the first line, as
@@ -297,7 +302,7 @@ function! SearchPosition#SearchPosition( line1, line2, pattern, isLiteral )
 "****D echomsg '****' l:before '/' l:exact '/' l:after
     endif
 
-    return s:Report(l:startLine, l:endLine, a:pattern,
+    return s:Report(l:startLine, l:endLine, l:pattern,
     \   s:Evaluate([l:matchesBefore, l:matchesCurrent, l:matchesAfter, l:before, l:exact, l:after])
     \)
 endfunction
