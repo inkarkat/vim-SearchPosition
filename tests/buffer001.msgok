@@ -1,4 +1,4 @@
-On first match, 1 following in line, 5 overall for /\<foo\>/
+On first match, 1 following in line, 5 overall; total 6 for /\<foo\>/
 
 On last match of 2 in this line, 4 in following lines; total 6 for /\<foo\>/
 
