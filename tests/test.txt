@@ -1,0 +1,89 @@
+<foo> <bar> notyetimplemented </bar> </foo>
+la
+li
+lu
+le
+lo
+ha
+hi
+hu
+he
+ho
+
+This <tool> is not yet [implemented]! - foo {bar} baz <hehe> hihi hoho
+This <TOOL> IS not yet [IMPLEMENTED]! - foo {bar} baz <hehe> hihi hoho
+
+(foo, bar, baz, hehe, hihi, hoho)
+
+This (tool is.not yet) implemented!
+
+This 'one line' is "a (multi line span)ning comment" (hehe). 
+This 'one line' is "a (multi
+line
+span)ning
+comment" (hehe). 
+Press <any [not.yet.imple[me]nted> key to continue...
+Press <any not.yet.implemented> key to continue...
+la
+le
+lu
+hi
+ho
+lala
+lele
+lulu
+hihi
+hoho
+lalalala
+lelelele
+lulululu
+hihihihi
+hohohoho
+
+
+lalalala
+Heading 1
+---------
+lelelele
+lulululu
+Heading 2
+---------
+Heading 3
+---------
+hihihihi
+Heading 4
+---------
+
+This OR message is false by foobar on Tuesday, 21. August 2008. 
+0815 in 4711
+14-Jul-2008 in 31-Dec-2009
+
+:set fo?
+:echomsg "hallo"
+:yank
+:put
+:echo "yeah"
+
+Böblingen hehe
+Nürtingen
+
+In der Türkei live Turkies. That's how it is. 
+Anatarasay Foobar Lulli 
+In the Galasaseray Foxinoni is a vavalugi campusci. 
+
+-- foo
+   -- bar
+      haha
+
+nono:%s/^/- /
+Hahahah huhuhu
+
+" In the 80's, Dan-Duckling-Dock Diestle won the world wrestling record. 
+" In the 80's, Dan-Duckling-Dock Diestle won the world wrestling record. 
+" In the 80's, Dan-Duckling-Dock Diestle won the world wrestling record. 
+" In the 80's, Dan-Duckling-Dock Diestle won the world wrestling record. 
+" In the 80's, Dan-Duckling-Dock Diestle won the world wrestling record. 
+" In the 80's, Dan-Duckling-Dock Diestle won the world wrestling record. 
+" In the 80's, Dan-Duckling-Dock Diestle won the world wrestling record. 
+" In the 80's, Dan-Duckling-Dock Diestle won the world wrestling record. 
+EOF
