@@ -1,0 +1,9 @@
+2 matches after cursor in this line, 6 overall for /\<foo\>/
+
+:1,15 2 matches after cursor in this line, 4 overall for /\<foo\>/
+
+:1,15 2 matches after cursor in this line, 4 overall for /\<foo\>/
+
+:1,15 2 matches after cursor in this line, 4 overall for /\<foo\>/
+
+:70,76 1 match after this line for /\<foo\>/
