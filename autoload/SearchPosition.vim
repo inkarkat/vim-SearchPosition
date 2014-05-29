@@ -2,6 +2,7 @@
 "
 " DEPENDENCIES:
 "   - ingo/avoidprompt.vim autoload script
+"   - ingo/compat.vim autoload script
 "   - ingo/regexp.vim autoload script
 "
 " Copyright: (C) 2008-2014 Ingo Karkat
@@ -10,6 +11,8 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.20.009	30-May-2014	ENH: Also show range that the matches fall into;
+"				locations close to the current line in relative form.
 "   1.16.008	05-May-2014	Abort commands and mappings on error.
 "				Use SearchPosition#OperatorExpr() to also handle
 "				[count] before the operator mapping.
@@ -45,20 +48,31 @@
 let s:save_cpo = &cpo
 set cpo&vim
 
-function! s:GetMatchesCnt( range, pattern )
+function! s:RecordRange( range )
+    let l:lnum = line('.')
+    " Assumption: We're invoked with ascending line numbers.
+    if a:range[1] == 0
+	let a:range[0] = l:lnum
+	let a:range[1] = l:lnum
+    else
+	let a:range[1] = l:lnum
+    endif
+endfunction
+function! s:GetMatchesStats( range, pattern )
     let l:matchesCnt = 0
+    let l:range = [0x7FFFFFFF, 0]
 
     redir => l:matches
     try
-	silent execute 'keepjumps' a:range . 's/' . escape(a:pattern, '/') . '//gn'
+	silent execute 'keepjumps' a:range . 's/' . escape(a:pattern, '/') . '/\=s:RecordRange(l:range)/gn'
 	redir END
-	let l:matchesCnt = matchstr( l:matches, '\n\zs\d\+' )
+	let l:matchesCnt = str2nr(matchstr( l:matches, '\n\zs\d\+' ))
     catch /^Vim\%((\a\+)\)\=:E486/ " Pattern not found
     finally
 	redir END
     endtry
 
-    return l:matchesCnt
+    return [l:matchesCnt] + l:range
 endfunction
 " The position in the key is a boolean (0/1) whether there are any matches.
 " The placeholder {N} will be filled with the actual number, where N is:
@@ -131,23 +145,56 @@ function! s:Evaluate( matchResults )
     let l:evaluation = substitute(l:evaluation, '{\%(\d\|+\)\+}', '\=s:ResolveParameters(a:matchResults, submatch(0))', 'g')
     return [1, substitute(l:evaluation, '\C1 matches' , '1 match', 'g')]
 endfunction
-function! s:Report( line1, line2, pattern, evaluation )
+function! s:TranslateLocation( lnum, isShowAbsoluteNumberForCurrentLine )
+    if a:lnum == line('.')
+	return (a:isShowAbsoluteNumberForCurrentLine ? a:lnum : '.')
+    elseif a:lnum == line('$')
+	return '$'
+    elseif ingo#compat#abs(a:lnum - line('.')) <= g:SearchPosition_MatchRangeShowRelativeThreshold
+	let l:offset = a:lnum - line('.')
+	return '.' . (l:offset < 0 ? l:offset : '+' . l:offset)
+    else
+	return a:lnum
+    endif
+endfunction
+function! s:EvaluateMatchRange( line1, line2, firstMatchLnum, lastMatchLnum )
+    if a:firstMatchLnum == a:line1 && a:lastMatchLnum == a:line2
+	return ' spanning the entire ' . (a:line1 == 1 && a:line2 == line('$') ? 'buffer' : 'range')
+    endif
+
+    let l:isFallsOnCurrentLine = (a:firstMatchLnum == line('.') || a:lastMatchLnum == line('.'))
+
+    let l:firstLocation = s:TranslateLocation(a:firstMatchLnum, l:isFallsOnCurrentLine)
+    if a:firstMatchLnum == a:lastMatchLnum
+	return (a:firstMatchLnum == line('.') ? '' : printf(' at %s', l:firstLocation))
+    endif
+    let l:lastLocation = s:TranslateLocation(a:lastMatchLnum, l:isFallsOnCurrentLine)
+    return printf(' within %s,%s', l:firstLocation, l:lastLocation)
+endfunction
+function! s:Report( line1, line2, pattern, firstMatchLnum, lastMatchLnum, evaluation )
     let [l:isSuccessful, l:evaluationText] = a:evaluation
 
     redraw  " This is necessary because of the :redir done earlier.
     echo ''
 
     let l:range = ''
-    if g:SearchPosition_ShowRange && l:isSuccessful
-	let l:range = a:line1 . ',' . a:line2
-	if a:line1 == 1 && a:line2 == line('$')
-	    let l:range = ''
-	elseif a:line1 == a:line2
-	    let l:range = a:line1
+    let l:matchRange = ''
+    if l:isSuccessful
+	if g:SearchPosition_ShowRange
+	    let l:range = a:line1 . ',' . a:line2
+	    if a:line1 == 1 && a:line2 == line('$')
+		let l:range = ''
+	    elseif a:line1 == a:line2
+		let l:range = a:line1
+	    endif
+	    if ! empty(l:range)
+		let l:range = ':' . l:range . ' '
+		echon l:range
+	    endif
 	endif
-	if ! empty(l:range)
-	    let l:range = ':' . l:range . ' '
-	    echon l:range
+
+	if g:SearchPosition_ShowMatchRange
+	    let l:matchRange = s:EvaluateMatchRange(a:line1, a:line2, a:firstMatchLnum, a:lastMatchLnum)
 	endif
     endif
 
@@ -160,7 +207,7 @@ function! s:Report( line1, line2, pattern, evaluation )
     \	empty(g:SearchPosition_HighlightGroup) ? 'None' : g:SearchPosition_HighlightGroup :
     \	'WarningMsg'
     \)
-    echon l:evaluationText
+    echon l:evaluationText . l:matchRange
     if l:isSuccessful | echohl None | endif
 
     if ! empty(l:pattern)
@@ -201,9 +248,9 @@ function! SearchPosition#SearchPosition( line1, line2, pattern, isLiteral )
 
     " This triple records matches relative to the current line or current closed
     " fold.
-    let l:matchesBefore = 0
-    let l:matchesCurrent = 0
-    let l:matchesAfter = 0
+    let [l:matchesBefore, l:firstLnumBefore, l:lastLnumBefore]    = [0, 0x7FFFFFFF, 0]
+    let [l:matchesCurrent, l:firstLnumCurrent, l:lastLnumCurrent] = [0, 0x7FFFFFFF, 0]
+    let [l:matchesAfter, l:firstLnumAfter, l:lastLnumAfter]       = [0, 0x7FFFFFFF, 0]
 
     if l:cursorLine >= l:startLine
 	let l:lineBeforeCurrent = (l:isCursorInsideRange ?
@@ -211,7 +258,7 @@ function! SearchPosition#SearchPosition( line1, line2, pattern, isLiteral )
 	\   l:endLine
 	\)
 	if l:lineBeforeCurrent >= l:startLine
-	    let l:matchesBefore = s:GetMatchesCnt(l:startLine . ',' . l:lineBeforeCurrent, a:pattern)
+	    let [l:matchesBefore, l:firstLnumBefore, l:lastLnumBefore] = s:GetMatchesStats(l:startLine . ',' . l:lineBeforeCurrent, a:pattern)
 	endif
     endif
 
@@ -220,7 +267,7 @@ function! SearchPosition#SearchPosition( line1, line2, pattern, isLiteral )
 	" closed fold.
 	" We're not interested in matches on the current line if it's outside
 	" the range to be examined.
-	let l:matchesCurrent = s:GetMatchesCnt('.', a:pattern)
+	let [l:matchesCurrent, l:firstLnumCurrent, l:lastLnumCurrent] = s:GetMatchesStats('.', a:pattern)
     endif
 
     if l:cursorLine <= l:endLine
@@ -229,10 +276,13 @@ function! SearchPosition#SearchPosition( line1, line2, pattern, isLiteral )
 	\   l:startLine
 	\)
 	if l:lineAfterCurrent <= l:endLine
-	    let l:matchesAfter = s:GetMatchesCnt(l:lineAfterCurrent . ',' . l:endLine, a:pattern)
+	    let [l:matchesAfter, l:firstLnumAfter, l:lastLnumAfter] = s:GetMatchesStats(l:lineAfterCurrent . ',' . l:endLine, a:pattern)
 	endif
     endif
-"****D echomsg '****' l:matchesBefore '/' l:matchesCurrent '/' l:matchesAfter
+
+    let l:firstLnum = min([l:firstLnumBefore, l:firstLnumCurrent, l:firstLnumAfter])
+    let l:lastLnum = max([l:lastLnumBefore, l:lastLnumCurrent, l:lastLnumAfter])
+"****D echomsg '****' l:matchesBefore '/' l:matchesCurrent '/' l:matchesAfter 'in' string([l:firstLnum, l:lastLnum])
 
     let l:before = 0
     let l:exact = 0
@@ -298,6 +348,7 @@ function! SearchPosition#SearchPosition( line1, line2, pattern, isLiteral )
     endif
 
     return s:Report(l:startLine, l:endLine, a:pattern,
+    \   l:firstLnum, l:lastLnum,
     \   s:Evaluate([l:matchesBefore, l:matchesCurrent, l:matchesAfter, l:before, l:exact, l:after])
     \)
 endfunction
