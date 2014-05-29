@@ -1,0 +1,5 @@
+On sole match in this line, 1 in following lines for /tool/
+
+On sole match in this line, 1 in previous lines for /one line/
+
+2 matches before this line for /\(['"]\)one\s\+line\1/
