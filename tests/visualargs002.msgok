@@ -1,0 +1,7 @@
+On sole match in this line, 1 before and 3 after this line; total 5 for /la\n/
+
+On sole match in this line, 2 in following lines for /la\nle/
+
+On sole match in this line, 1 before and 2 after this line; total 4 for /la\nl/
+
+On sole match for /la\nle\n/
