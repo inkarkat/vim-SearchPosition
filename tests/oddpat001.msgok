@@ -1,0 +1,15 @@
+Assumes fold because no match inside line: 
+
+1 match in this fold for /\%#foo/
+
+No matches for /\%#foo/
+
+No matches for /\%#foo/
+
+Matching inside line starts at first column: 
+
+On sole match for /\%#<foo/
+
+Match before cursor but no overall match in line: 
+
+Special atoms have distorted the tally for /\%#<foo/
