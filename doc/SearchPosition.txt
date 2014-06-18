@@ -19,9 +19,13 @@ the entire buffer for a pattern (defaulting to the last search pattern),
 and print a summary of the number of occurrences above, below and on the
 current line, e.g.:
     1 match after cursor in this line, 8 following, 2 in previous lines; ~
-	total 10 for /\<SearchPosition\>/ ~
-    5 matches in this fold, 9 before, 6 following; total 21 for /endif/ ~
-    On sole match in this line, 40 in following lines for /let/ ~
+	total 10 within 11,42 for /\<SearchPosition\>/ ~
+
+    5 matches in this fold, 9 before, 6 following; total 21 spanning the ~
+    entire buffer for /endif/ ~
+
+    On sole match in this line, 40 in following lines within 24,171 for /let/ ~
+
     :144,172 7 matches in this fold for /let/ ~
 
 This provides better orientation in a buffer without having to first jump from
@@ -42,10 +46,12 @@ Lerner.
 ==============================================================================
 USAGE							*SearchPosition-usage*
 							     *:SearchPosition*
-:[range]SearchPosition [{pattern}]
+:[range]SearchPosition [/][{pattern}][/]
 			Show position of the search results for {pattern} (or
 			the last search pattern (|quote/|) if {pattern} is
-			omitted). All lines in [range] (or the entire buffer
+			omitted). Without [/], only literal whole words are
+			matched. |:search-args|
+			All lines in [range] (or the entire buffer
 			if omitted) are considered, and the number of matches
 			in relation to the current cursor position is echoed
 			to the command line.
@@ -91,7 +97,7 @@ To uninstall, use the |:RmVimball| command.
 DEPENDENCIES					 *SearchPosition-dependencies*
 
 - Requires Vim 7.0 or higher.
-- Requires the |ingo-library.vim| plugin (vimscript #4433), version 1.008 or
+- Requires the |ingo-library.vim| plugin (vimscript #4433), version 1.020 or
   higher.
 
 ==============================================================================
@@ -108,6 +114,14 @@ To shorten the report message, the [range] and used search pattern can be
 omitted from the message; by default, both are included in the message text: >
     let g:SearchPosition_ShowRange = 1
     let g:SearchPosition_ShowPattern = 1
+<
+					     *g:SearchPosition_ShowMatchRange*
+			    *g:SearchPosition_MatchRangeShowRelativeThreshold*
+The report also shows in which range the matches fall. For locations close to
+the cursor and the end of the buffer, a relative notation is used. You can
+influence both via: >
+    let g:SearchPosition_ShowMatchRange = 1
+    let g:SearchPosition_MatchRangeShowRelativeThreshold = 10
 <
 
 If you want to use different mappings, map your keys to the
@@ -135,10 +149,14 @@ IDEAS							*SearchPosition-ideas*
 ==============================================================================
 HISTORY						      *SearchPosition-history*
 
-1.16	RELEASEME
+1.20	RELEASEME
 - Abort commands and mappings on error.
 - Use SearchPosition#OperatorExpr() to also handle [count] before the operator
   mapping.
+- CHG: Also allow :[range]SearchPosition /{pattern}/ argument syntax; make
+  previous :SearchPosition {pattern} do a literal whole word search.
+- ENH: Also show range that the matches fall into; locations close to the
+  current line in relative form.
 - Add dependency to ingo-library (vimscript #4433).
 
 1.15	30-Sep-2011
