@@ -6,6 +6,5 @@ if &columns < 120
 endif
 
 edit test.txt
-normal! gg0
-execute "normal! /\\<foo\\>/\<CR>"
+execute "normal! gg0/\\<foo\\>/\<CR>"
 
