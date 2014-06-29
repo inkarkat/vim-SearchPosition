@@ -3,6 +3,7 @@
 " DEPENDENCIES:
 "   - Requires Vim 7.0 or higher.
 "   - SearchPosition.vim autoload script
+"   - ingo/cmdargs/pattern.vim autoload script
 "   - ingo/selection.vim autoload script
 "
 " Copyright: (C) 2008-2014 Ingo Karkat
@@ -11,6 +12,11 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.20.019	30-May-2014	Add g:SearchPosition_ShowMatchRange config.
+"   1.20.018	29-May-2014	Use
+"				ingo#cmdargs#pattern#ParseUnescapedWithLiteralWholeWord()
+"				to also allow :[range]SearchPosition /{pattern}/
+"				argument syntax with literal whole word search.
 "   1.16.017	05-May-2014	Abort commands and mappings on error.
 "				Use SearchPosition#OperatorExpr() to also handle
 "				[count] before the operator mapping.
@@ -88,11 +94,17 @@ endif
 if ! exists('g:SearchPosition_ShowPattern')
     let g:SearchPosition_ShowPattern = 1
 endif
+if ! exists('g:SearchPosition_ShowMatchRange')
+    let g:SearchPosition_ShowMatchRange = 1
+endif
+if ! exists('g:SearchPosition_MatchRangeShowRelativeThreshold')
+    let g:SearchPosition_MatchRangeShowRelativeThreshold = 9
+endif
 
 
 "- commands and mappings ------------------------------------------------------
 
-command! -range=% -nargs=? SearchPosition if ! SearchPosition#SearchPosition(<line1>, <line2>, <q-args>, 0) | echoerr ingo#err#Get() | endif
+command! -range=% -nargs=? SearchPosition if ! SearchPosition#SearchPosition(<line1>, <line2>, ingo#cmdargs#pattern#ParseUnescapedWithLiteralWholeWord(<q-args>), 0) | echoerr ingo#err#Get() | endif
 
 nnoremap <silent> <expr> <Plug>SearchPositionOperator SearchPosition#OperatorExpr()
 if ! hasmapto('<Plug>SearchPositionOperator', 'n')
