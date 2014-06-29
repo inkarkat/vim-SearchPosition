@@ -149,7 +149,7 @@ IDEAS							*SearchPosition-ideas*
 ==============================================================================
 HISTORY						      *SearchPosition-history*
 
-1.20	RELEASEME
+1.20	19-Jun-2014
 - Abort commands and mappings on error.
 - Use SearchPosition#OperatorExpr() to also handle [count] before the operator
   mapping.
@@ -157,7 +157,8 @@ HISTORY						      *SearchPosition-history*
   previous :SearchPosition {pattern} do a literal whole word search.
 - ENH: Also show range that the matches fall into; locations close to the
   current line in relative form.
-- Add dependency to ingo-library (vimscript #4433).
+- Add dependency to ingo-library (vimscript #4433). *** You need to separately
+  install ingo-library (vimscript #4433) version 1.020 (or higher)! ***
 
 1.15	30-Sep-2011
 - Use <silent> for <Plug> mapping instead of default mapping.
