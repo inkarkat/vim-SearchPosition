@@ -150,9 +150,13 @@ function! s:TranslateLocation( lnum, isShowAbsoluteNumberForCurrentLine )
 	return (a:isShowAbsoluteNumberForCurrentLine ? a:lnum : '.')
     elseif a:lnum == line('$')
 	return '$'
+    elseif a:lnum == 1
+	return '1'
     elseif ingo#compat#abs(a:lnum - line('.')) <= g:SearchPosition_MatchRangeShowRelativeThreshold
 	let l:offset = a:lnum - line('.')
 	return '.' . (l:offset < 0 ? l:offset : '+' . l:offset)
+    elseif line('$') - a:lnum <= g:SearchPosition_MatchRangeShowRelativeThreshold
+	return '$-' . (line('$') - a:lnum)
     else
 	return a:lnum
     endif
@@ -193,7 +197,7 @@ function! s:Report( line1, line2, pattern, firstMatchLnum, lastMatchLnum, evalua
 	    endif
 	endif
 
-	if g:SearchPosition_ShowMatchRange
+	if g:SearchPosition_ShowMatchRange && a:lastMatchLnum != 0
 	    let l:matchRange = s:EvaluateMatchRange(a:line1, a:line2, a:firstMatchLnum, a:lastMatchLnum)
 	endif
     endif
