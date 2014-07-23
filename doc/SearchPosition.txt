@@ -116,12 +116,16 @@ omitted from the message; by default, both are included in the message text: >
     let g:SearchPosition_ShowPattern = 1
 <
 					     *g:SearchPosition_ShowMatchRange*
-			    *g:SearchPosition_MatchRangeShowRelativeThreshold*
-The report also shows in which range the matches fall. For locations close to
-the cursor and the end of the buffer, a relative notation is used. You can
-influence both via: >
+The report also shows in which range the matches fall. To turn this off: >
     let g:SearchPosition_ShowMatchRange = 1
+>			    *g:SearchPosition_MatchRangeShowRelativeThreshold*
+			 *g:SearchPosition_MatchRangeShowRelativeEndThreshold*
+If the range falls entirely into the lines that are shown in the current
+window, a relative range is used. To prefer a fixed threshold, or to turn this
+off, use: >
     let g:SearchPosition_MatchRangeShowRelativeThreshold = 10
+The relative threshold at the end is determined via: >
+    let g:SearchPosition_MatchRangeShowRelativeEndThreshold = 10
 <
 
 If you want to use different mappings, map your keys to the
@@ -148,6 +152,13 @@ IDEAS							*SearchPosition-ideas*
 
 ==============================================================================
 HISTORY						      *SearchPosition-history*
+
+1.21	RELEASEME
+- ENH: Show relative range when the lines are shown in the current window with
+  a new default configuration value of "visible" for
+  g:SearchPosition_MatchRangeShowRelativeThreshold. Use separate
+  g:SearchPosition_MatchRangeShowRelativeEndThreshold for threshold at the
+  end.
 
 1.20	19-Jun-2014
 - Abort commands and mappings on error.
