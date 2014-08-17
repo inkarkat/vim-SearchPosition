@@ -4,6 +4,7 @@
 "   - ingo/avoidprompt.vim autoload script
 "   - ingo/compat.vim autoload script
 "   - ingo/regexp.vim autoload script
+"   - ingo/window/dimensions.vim autoload script
 "
 " Copyright: (C) 2008-2014 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
@@ -11,6 +12,13 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.21.010	30-Jun-2014	ENH: Show relative range when the lines are
+"				shown in the current window with a new default
+"				configuration value of "visible" for
+"				g:SearchPosition_MatchRangeShowRelativeThreshold.
+"				Use separate
+"				g:SearchPosition_MatchRangeShowRelativeEndThreshold
+"				for threshold at the end.
 "   1.20.009	30-May-2014	ENH: Also show range that the matches fall into;
 "				locations close to the current line in relative form.
 "   1.16.008	05-May-2014	Abort commands and mappings on error.
@@ -145,17 +153,17 @@ function! s:Evaluate( matchResults )
     let l:evaluation = substitute(l:evaluation, '{\%(\d\|+\)\+}', '\=s:ResolveParameters(a:matchResults, submatch(0))', 'g')
     return [1, substitute(l:evaluation, '\C1 matches' , '1 match', 'g')]
 endfunction
-function! s:TranslateLocation( lnum, isShowAbsoluteNumberForCurrentLine )
+function! s:TranslateLocation( lnum, isShowAbsoluteNumberForCurrentLine, firstVisibleLnum, lastVisibleLnum )
     if a:lnum == line('.')
 	return (a:isShowAbsoluteNumberForCurrentLine ? a:lnum : '.')
     elseif a:lnum == line('$')
 	return '$'
     elseif a:lnum == 1
 	return '1'
-    elseif ingo#compat#abs(a:lnum - line('.')) <= g:SearchPosition_MatchRangeShowRelativeThreshold
+    elseif a:lnum >= a:firstVisibleLnum && a:lnum <= a:lastVisibleLnum
 	let l:offset = a:lnum - line('.')
 	return '.' . (l:offset < 0 ? l:offset : '+' . l:offset)
-    elseif line('$') - a:lnum <= g:SearchPosition_MatchRangeShowRelativeThreshold
+    elseif line('$') - a:lnum <= g:SearchPosition_MatchRangeShowRelativeEndThreshold
 	return '$-' . (line('$') - a:lnum)
     else
 	return a:lnum
@@ -168,11 +176,15 @@ function! s:EvaluateMatchRange( line1, line2, firstMatchLnum, lastMatchLnum )
 
     let l:isFallsOnCurrentLine = (a:firstMatchLnum == line('.') || a:lastMatchLnum == line('.'))
 
-    let l:firstLocation = s:TranslateLocation(a:firstMatchLnum, l:isFallsOnCurrentLine)
+    let [l:firstVisibleLnum, l:lastVisibleLnum] = (g:SearchPosition_MatchRangeShowRelativeThreshold ==# 'visible' ?
+    \   ingo#window#dimensions#DisplayedLines() :
+    \   [line('.') - g:SearchPosition_MatchRangeShowRelativeThreshold, line('.') + g:SearchPosition_MatchRangeShowRelativeThreshold]
+    \)
+    let l:firstLocation = s:TranslateLocation(a:firstMatchLnum, l:isFallsOnCurrentLine, l:firstVisibleLnum, l:lastVisibleLnum)
     if a:firstMatchLnum == a:lastMatchLnum
 	return (a:firstMatchLnum == line('.') ? '' : printf(' at %s', l:firstLocation))
     endif
-    let l:lastLocation = s:TranslateLocation(a:lastMatchLnum, l:isFallsOnCurrentLine)
+    let l:lastLocation = s:TranslateLocation(a:lastMatchLnum, l:isFallsOnCurrentLine, l:firstVisibleLnum, l:lastVisibleLnum)
     return printf(' within %s,%s', l:firstLocation, l:lastLocation)
 endfunction
 function! s:Report( line1, line2, pattern, firstMatchLnum, lastMatchLnum, evaluation )
