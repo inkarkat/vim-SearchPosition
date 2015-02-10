@@ -75,7 +75,7 @@ function! s:GetMatchesStats( range, pattern )
 	silent execute 'keepjumps' a:range . 's/' . escape(a:pattern, '/') . '/\=s:RecordRange(l:range)/gn'
 	redir END
 	let l:matchesCnt = str2nr(matchstr( l:matches, '\n\zs\d\+' ))
-    catch /^Vim\%((\a\+)\)\=:E486/ " Pattern not found
+    catch /^Vim\%((\a\+)\)\=:E486:/ " Pattern not found
     finally
 	redir END
     endtry
