@@ -40,8 +40,7 @@ prints the number of matches for the last search pattern. This plugin
 builds on top of this by providing more context with regards to the current
 cursor position plus additional information.
 
-This plugin is similar to IndexedSearch.vim (vimscript#1682) by Yakov
-Lerner.
+This plugin is similar to IndexedSearch.vim (vimscript #1682) by Yakov Lerner.
 
 ==============================================================================
 USAGE							*SearchPosition-usage*
