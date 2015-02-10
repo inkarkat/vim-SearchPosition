@@ -1,18 +1,17 @@
-" Test odd patterns. 
+" Test odd patterns.
 
-echo 'Assumes fold because no match inside line: '
-SearchPosition \%#foo
+echo 'Assumes fold because no match inside line:'
+SearchPosition /\%#foo/
 normal! 0
-SearchPosition \%#foo
+SearchPosition /\%#foo/
 normal! $
-SearchPosition \%#foo
+SearchPosition /\%#foo/
 
 normal! 0
-echo 'Matching inside line starts at first column: '
-SearchPosition \%#<foo
+echo 'Matching inside line starts at first column:'
+SearchPosition /\%#<foo/
 normal! $
-echo 'Match before cursor but no overall match in line: '
-SearchPosition \%#<foo
+echo 'Match before cursor but no overall match in line:'
+SearchPosition /\%#<foo/
 
 call vimtest#Quit()
-
