@@ -6,7 +6,7 @@
 "   - ingo/regexp.vim autoload script
 "   - ingo/window/dimensions.vim autoload script
 "
-" Copyright: (C) 2008-2014 Ingo Karkat
+" Copyright: (C) 2008-2015 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
@@ -235,7 +235,7 @@ function! s:Report( line1, line2, pattern, firstMatchLnum, lastMatchLnum, evalua
     endif
     if ! l:isSuccessful | echohl None | endif
 
-    return l:isSuccessful
+    return 1
 endfunction
 function! SearchPosition#SearchPosition( line1, line2, pattern, isLiteral )
     let l:startLine = (a:line1 ? max([a:line1, 1]) : 1)
@@ -341,13 +341,13 @@ function! SearchPosition#SearchPosition( line1, line2, pattern, isLiteral )
 	    \	    ['k$', 'c', l:cursorLine]
 	    \	)
 	    execute 'normal!' l:adaptionMovement
-	    let l:matchLine = search(a:pattern, l:searchFlags, l:searchStopLine)
+	    let l:matchLnum = search(a:pattern, l:searchFlags, l:searchStopLine)
 	    " Depending on whether the pattern matches only a newline character
 	    " or more after it, the line number is the one before or the current
 	    " line. This check is only needed for a match on the first line, as
 	    " we use a stopline for all other searches that do not need to wrap
 	    " around.
-	    if l:matchLine == l:cursorLine - 1 || l:matchLine == l:cursorLine
+	    if l:matchLnum > 0 && (l:matchLnum == l:cursorLine - 1 || l:matchLnum == l:cursorLine)
 		" On an empty line, the cursor is usually on the newline
 		" character, but it can be after it (= match before cursor) if
 		" 'virtualedit' is set.
