@@ -158,6 +158,17 @@ HISTORY						      *SearchPosition-history*
   g:SearchPosition_MatchRangeShowRelativeThreshold. Use separate
   g:SearchPosition_MatchRangeShowRelativeEndThreshold for threshold at the
   end.
+- FIX: After "Special atoms have distorted the tally" warning, an additional
+  stray (last actual) error is repeated. s:Report() also needs to return 1
+  after such warning.
+- BUG: "Special atoms have distorted the tally" warning instead of "No
+  matches" when on first line. Must not allow previous matching line when that
+  is identical to 0, the return value of search() when it fails.
+- BUG: "Special atoms have distorted the tally" when doing
+  :SearchPosition/\n\n/ on empty line. The special case for \n matching is
+  actually more complex; need to also ensure that the match doesn't lie
+  completely on the previous line, and retry without the "c" search flag if it
+  does.
 
 1.20	19-Jun-2014
 - Abort commands and mappings on error.
@@ -221,7 +232,7 @@ First published version.
 Started development.
 
 ==============================================================================
-Copyright: (C) 2009-2014 Ingo Karkat
+Copyright: (C) 2009-2015 Ingo Karkat
 The VIM LICENSE applies to this plugin; see |copyright|.
 
 Maintainer:	Ingo Karkat <ingo@karkat.de>
