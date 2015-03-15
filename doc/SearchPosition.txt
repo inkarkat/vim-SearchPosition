@@ -117,7 +117,7 @@ omitted from the message; by default, both are included in the message text: >
 					     *g:SearchPosition_ShowMatchRange*
 The report also shows in which range the matches fall. To turn this off: >
     let g:SearchPosition_ShowMatchRange = 1
->			    *g:SearchPosition_MatchRangeShowRelativeThreshold*
+<			    *g:SearchPosition_MatchRangeShowRelativeThreshold*
 			 *g:SearchPosition_MatchRangeShowRelativeEndThreshold*
 If the range falls entirely into the lines that are shown in the current
 window, a relative range is used. To prefer a fixed threshold, or to turn this
@@ -152,7 +152,7 @@ IDEAS							*SearchPosition-ideas*
 ==============================================================================
 HISTORY						      *SearchPosition-history*
 
-1.21	RELEASEME
+1.21	08-Mar-2015
 - ENH: Show relative range when the lines are shown in the current window with
   a new default configuration value of "visible" for
   g:SearchPosition_MatchRangeShowRelativeThreshold. Use separate
