@@ -12,6 +12,21 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.21.011	11-Feb-2015	FIX: After "Special atoms have distorted the
+"				tally" warning, an additional stray (last
+"				actual) error is repeated. s:Report() also needs
+"				to return 1 after such warning.
+"				BUG: "Special atoms have distorted the tally"
+"				warning instead of "No matches" when on first
+"				line. Must not allow previous matching line when
+"				that is identical to 0, the return value of
+"				search() when it fails.
+"				BUG: "Special atoms have distorted the tally"
+"				when doing :SearchPosition/\n\n/ on empty line.
+"				The special case for \n matching is actually
+"				more complex; need to also ensure that the match
+"				doesn't lie completely on the previous line, and
+"				retry without the "c" search flag if it does.
 "   1.21.010	30-Jun-2014	ENH: Show relative range when the lines are
 "				shown in the current window with a new default
 "				configuration value of "visible" for
@@ -341,13 +356,22 @@ function! SearchPosition#SearchPosition( line1, line2, pattern, isLiteral )
 	    \	    ['k$', 'c', l:cursorLine]
 	    \	)
 	    execute 'normal!' l:adaptionMovement
-	    let l:matchLnum = search(a:pattern, l:searchFlags, l:searchStopLine)
-	    " Depending on whether the pattern matches only a newline character
-	    " or more after it, the line number is the one before or the current
-	    " line. This check is only needed for a match on the first line, as
-	    " we use a stopline for all other searches that do not need to wrap
-	    " around.
-	    if l:matchLnum > 0 && (l:matchLnum == l:cursorLine - 1 || l:matchLnum == l:cursorLine)
+	    let l:matchLnum = search(a:pattern, 'n' . l:searchFlags, l:searchStopLine)
+	    let l:isMatch = 0
+	    if l:matchLnum == l:cursorLine  " This strict check is only needed for a match on the first line, as we use a stopline for all other searches that do not need to wrap around.
+		let l:isMatch = 1
+	    elseif l:matchLnum > 0 &&
+	    \   l:matchLnum == l:cursorLine - 1 &&
+	    \   search(a:pattern, 'ne' . l:searchFlags, l:searchStopLine) == l:cursorLine - 1
+		" The match lies completely on the previous line; not what we
+		" wanted (it should normally end on the current line). This
+		" happens when a:pattern is a single newline. In this case, we
+		" need to disallow matching at the current position (above the
+		" actual current line) by dropping the "c" flag.
+		let l:isMatch = (search(a:pattern, 'n', l:searchStopLine) == l:cursorLine)
+	    endif
+
+	    if l:isMatch
 		" On an empty line, the cursor is usually on the newline
 		" character, but it can be after it (= match before cursor) if
 		" 'virtualedit' is set.
