@@ -230,13 +230,20 @@ function! s:Report( line1, line2, pattern, firstMatchLnum, lastMatchLnum, evalua
 	endif
     endif
 
-    let l:pattern = ''
+    let l:patternMessage = ''
     if g:SearchPosition_ShowPattern
 	let l:pattern = ingo#avoidprompt#TranslateLineBreaks('/' . (empty(a:pattern) ? @/ : escape(a:pattern, '/')) . '/')
+	" Assumption: The evaluation message only contains printable ASCII
+	" characters; we can thus simple use strlen() to determine the number of
+	" occupied virtual columns. Otherwise, ingo#compat#strdisplaywidth()
+	" could be used.
+	let l:patternMessage = ingo#avoidprompt#Truncate(' for ' . l:pattern, (strlen(l:range) + strlen(l:evaluationText)))
     endif
 
 
+    echomsg l:range . l:evaluationText . l:matchRange . l:patternMessage
     redraw  " This is necessary because of the :redir done earlier.
+
     echo ''
     echon l:range
     execute 'echohl' (l:isSuccessful ?
@@ -245,14 +252,7 @@ function! s:Report( line1, line2, pattern, firstMatchLnum, lastMatchLnum, evalua
     \)
     echon l:evaluationText . l:matchRange
     if l:isSuccessful | echohl None | endif
-
-    if ! empty(l:pattern)
-	" Assumption: The evaluation message only contains printable ASCII
-	" characters; we can thus simple use strlen() to determine the number of
-	" occupied virtual columns. Otherwise, ingo#compat#strdisplaywidth()
-	" could be used.
-	echon ingo#avoidprompt#Truncate(' for ' . l:pattern, (strlen(l:range) + strlen(l:evaluationText)))
-    endif
+    echon l:patternMessage
     if ! l:isSuccessful | echohl None | endif
 
     return 1
