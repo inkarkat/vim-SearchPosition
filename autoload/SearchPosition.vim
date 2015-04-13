@@ -226,6 +226,7 @@ function! s:GetReport( line1, line2, pattern, firstMatchLnum, lastMatchLnum, eva
 	endif
 
 	if g:SearchPosition_ShowMatchRange && a:lastMatchLnum != 0
+	    redraw  " This is necessary because of the :redir done earlier.
 	    let l:matchRange = s:EvaluateMatchRange(a:line1, a:line2, a:firstMatchLnum, a:lastMatchLnum)
 	endif
     endif
@@ -246,7 +247,7 @@ function! s:Report( line1, line2, pattern, firstMatchLnum, lastMatchLnum, evalua
     let [l:isSuccessful, l:range, l:evaluationText, l:matchRange, l:patternMessage] = s:GetReport(a:line1, a:line2, a:pattern, a:firstMatchLnum, a:lastMatchLnum, a:evaluation)
 
     echomsg l:range . l:evaluationText . l:matchRange . l:patternMessage
-    redraw  " This is necessary because of the :redir done earlier.
+    redraw
 
     echo ''
     echon l:range
