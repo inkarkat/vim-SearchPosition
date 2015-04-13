@@ -207,7 +207,7 @@ function! s:EvaluateMatchRange( line1, line2, firstMatchLnum, lastMatchLnum )
     let l:lastLocation = s:TranslateLocation(a:lastMatchLnum, l:isFallsOnCurrentLine, l:firstVisibleLnum, l:lastVisibleLnum)
     return printf(' within %s,%s', l:firstLocation, l:lastLocation)
 endfunction
-function! s:Report( line1, line2, pattern, firstMatchLnum, lastMatchLnum, evaluation )
+function! s:GetReport( line1, line2, pattern, firstMatchLnum, lastMatchLnum, evaluation )
     let [l:isSuccessful, l:evaluationText] = a:evaluation
 
     let l:range = ''
@@ -240,6 +240,10 @@ function! s:Report( line1, line2, pattern, firstMatchLnum, lastMatchLnum, evalua
 	let l:patternMessage = ingo#avoidprompt#Truncate(' for ' . l:pattern, (strlen(l:range) + strlen(l:evaluationText)))
     endif
 
+    return [l:isSuccessful, l:range, l:evaluationText, l:matchRange, l:patternMessage]
+endfunction
+function! s:Report( line1, line2, pattern, firstMatchLnum, lastMatchLnum, evaluation )
+    let [l:isSuccessful, l:range, l:evaluationText, l:matchRange, l:patternMessage] = s:GetReport(a:line1, a:line2, a:pattern, a:firstMatchLnum, a:lastMatchLnum, a:evaluation)
 
     echomsg l:range . l:evaluationText . l:matchRange . l:patternMessage
     redraw  " This is necessary because of the :redir done earlier.
