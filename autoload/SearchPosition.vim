@@ -13,6 +13,9 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.30.014	14-Apr-2015	Extract s:EchoResult().
+"				Add SearchPosition#SearchPositionMultiple() to
+"				implement :SearchPositionMultiple command.
 "   1.22.013	14-Apr-2015	Also submit the plugin's result message (in
 "				unhighlighted form) to the message history (for
 "				recall and comparison).
@@ -250,10 +253,7 @@ function! s:GetReport( line1, line2, pattern, firstMatchLnum, lastMatchLnum, eva
 
     return [l:isSuccessful, l:range, l:evaluationText, l:matchRange, l:patternMessage]
 endfunction
-function! s:Report( isSuccessful, range, evaluationText, matchRange, patternMessage )
-    echomsg a:range . a:evaluationText . a:matchRange . a:patternMessage
-    redraw
-
+function! s:EchoResult( isSuccessful, range, evaluationText, matchRange, patternMessage )
     echo ''
     echon a:range
     execute 'echohl' (a:isSuccessful ?
@@ -264,7 +264,18 @@ function! s:Report( isSuccessful, range, evaluationText, matchRange, patternMess
     if a:isSuccessful | echohl None | endif
     echon a:patternMessage
     if ! a:isSuccessful | echohl None | endif
+endfunction
+function! s:Report( isSuccessful, range, evaluationText, matchRange, patternMessage )
+    echomsg a:range . a:evaluationText . a:matchRange . a:patternMessage
+    redraw
 
+    call s:EchoResult(a:isSuccessful, a:range, a:evaluationText, a:matchRange, a:patternMessage)
+    return 1
+endfunction
+function! s:ReportMultiple( results )
+    for [l:isSuccessful, l:range, l:evaluationText, l:matchRange, l:patternMessage] in a:results
+	call s:EchoResult(l:isSuccessful, l:range, l:evaluationText, l:matchRange, l:patternMessage)
+    endfor
     return 1
 endfunction
 function! s:SearchAndEvaluate( line1, line2, pattern, isLiteral )
@@ -421,6 +432,46 @@ function! SearchPosition#SearchPosition( line1, line2, pattern, isLiteral )
     \)
 
     return s:Report(l:isSuccessful, l:range, l:evaluationText, l:matchRange, l:patternMessage)
+endfunction
+function! SearchPosition#SearchPositionMultiple( line1, line2, arguments )
+    if ingo#cmdargs#pattern#IsDelimited(a:arguments)
+	let l:patterns = []
+	let l:arguments = a:arguments
+	while ! empty(l:arguments)
+	    let [l:unescapedPattern, l:arguments] = ingo#cmdargs#pattern#ParseUnescaped(l:arguments, '\%(,\s*\(\%([[:alnum:]\\"|]\@![\x00-\xFF]\).*\)\)\?')
+	    call add(l:patterns, l:unescapedPattern)
+	endwhile
+    else
+	let l:patterns = map(
+	\   split(a:arguments, ','),
+	\   'ingo#regexp#FromLiteralText(v:val, 1, "")'
+	\)
+    endif
+
+    call filter(l:patterns, '! empty(v:val)')
+
+    if len(l:patterns) < 2
+	call ingo#err#Set('Must pass at least two (comma-separated) {pattern}')
+	return 0
+    endif
+
+    let l:results = []
+    for l:pattern in l:patterns
+	let [
+	\   l:startLnum, l:endLnum,
+	\   l:firstLnum, l:lastLnum,
+	\   l:evaluation
+	\] = s:SearchAndEvaluate(a:line1, a:line2, l:pattern, 0)
+
+	call add(l:results, s:GetReport(
+	\   l:startLnum, l:endLnum,
+	\   l:pattern,
+	\   l:firstLnum, l:lastLnum,
+	\   l:evaluation
+	\))
+    endfor
+
+    return s:ReportMultiple(l:results)
 endfunction
 
 function! SearchPosition#SavePosition()
