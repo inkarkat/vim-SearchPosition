@@ -210,9 +210,6 @@ endfunction
 function! s:Report( line1, line2, pattern, firstMatchLnum, lastMatchLnum, evaluation )
     let [l:isSuccessful, l:evaluationText] = a:evaluation
 
-    redraw  " This is necessary because of the :redir done earlier.
-    echo ''
-
     let l:range = ''
     let l:matchRange = ''
     if l:isSuccessful
@@ -225,7 +222,6 @@ function! s:Report( line1, line2, pattern, firstMatchLnum, lastMatchLnum, evalua
 	    endif
 	    if ! empty(l:range)
 		let l:range = ':' . l:range . ' '
-		echon l:range
 	    endif
 	endif
 
@@ -239,6 +235,10 @@ function! s:Report( line1, line2, pattern, firstMatchLnum, lastMatchLnum, evalua
 	let l:pattern = ingo#avoidprompt#TranslateLineBreaks('/' . (empty(a:pattern) ? @/ : escape(a:pattern, '/')) . '/')
     endif
 
+
+    redraw  " This is necessary because of the :redir done earlier.
+    echo ''
+    echon l:range
     execute 'echohl' (l:isSuccessful ?
     \	empty(g:SearchPosition_HighlightGroup) ? 'None' : g:SearchPosition_HighlightGroup :
     \	'WarningMsg'
