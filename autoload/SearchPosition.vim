@@ -243,22 +243,20 @@ function! s:GetReport( line1, line2, pattern, firstMatchLnum, lastMatchLnum, eva
 
     return [l:isSuccessful, l:range, l:evaluationText, l:matchRange, l:patternMessage]
 endfunction
-function! s:Report( line1, line2, pattern, firstMatchLnum, lastMatchLnum, evaluation )
-    let [l:isSuccessful, l:range, l:evaluationText, l:matchRange, l:patternMessage] = s:GetReport(a:line1, a:line2, a:pattern, a:firstMatchLnum, a:lastMatchLnum, a:evaluation)
-
-    echomsg l:range . l:evaluationText . l:matchRange . l:patternMessage
+function! s:Report( isSuccessful, range, evaluationText, matchRange, patternMessage )
+    echomsg a:range . a:evaluationText . a:matchRange . a:patternMessage
     redraw
 
     echo ''
-    echon l:range
-    execute 'echohl' (l:isSuccessful ?
+    echon a:range
+    execute 'echohl' (a:isSuccessful ?
     \	empty(g:SearchPosition_HighlightGroup) ? 'None' : g:SearchPosition_HighlightGroup :
     \	'WarningMsg'
     \)
-    echon l:evaluationText . l:matchRange
-    if l:isSuccessful | echohl None | endif
-    echon l:patternMessage
-    if ! l:isSuccessful | echohl None | endif
+    echon a:evaluationText . a:matchRange
+    if a:isSuccessful | echohl None | endif
+    echon a:patternMessage
+    if ! a:isSuccessful | echohl None | endif
 
     return 1
 endfunction
@@ -395,10 +393,13 @@ function! SearchPosition#SearchPosition( line1, line2, pattern, isLiteral )
 "****D echomsg '****' l:before '/' l:exact '/' l:after
     endif
 
-    return s:Report(l:startLnum, l:endLnum, a:pattern,
+    let [l:isSuccessful, l:range, l:evaluationText, l:matchRange, l:patternMessage] = s:GetReport(
+    \   l:startLnum, l:endLnum, a:pattern,
     \   l:firstLnum, l:lastLnum,
     \   s:Evaluate([l:matchesBefore, l:matchesCurrent, l:matchesAfter, l:before, l:exact, l:after])
     \)
+
+    return s:Report(l:isSuccessful, l:range, l:evaluationText, l:matchRange, l:patternMessage)
 endfunction
 
 function! SearchPosition#SavePosition()
