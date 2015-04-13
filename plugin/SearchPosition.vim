@@ -12,6 +12,8 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.21.020	30-Jun-2014	Add
+"				g:SearchPosition_MatchRangeShowRelativeEndThreshold.
 "   1.20.019	30-May-2014	Add g:SearchPosition_ShowMatchRange config.
 "   1.20.018	29-May-2014	Use
 "				ingo#cmdargs#pattern#ParseUnescapedWithLiteralWholeWord()
@@ -98,7 +100,10 @@ if ! exists('g:SearchPosition_ShowMatchRange')
     let g:SearchPosition_ShowMatchRange = 1
 endif
 if ! exists('g:SearchPosition_MatchRangeShowRelativeThreshold')
-    let g:SearchPosition_MatchRangeShowRelativeThreshold = 9
+    let g:SearchPosition_MatchRangeShowRelativeThreshold = 'visible'
+endif
+if ! exists('g:SearchPosition_MatchRangeShowRelativeEndThreshold')
+    let g:SearchPosition_MatchRangeShowRelativeEndThreshold = 9
 endif
 
 
