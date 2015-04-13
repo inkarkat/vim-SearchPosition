@@ -3,6 +3,7 @@
 " DEPENDENCIES:
 "   - ingo/avoidprompt.vim autoload script
 "   - ingo/compat.vim autoload script
+"   - ingo/range.vim autoload script
 "   - ingo/regexp.vim autoload script
 "   - ingo/window/dimensions.vim autoload script
 "
@@ -12,6 +13,10 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.22.012	16-Mar-2015	BUG: Also need to account for cursor within
+"				closed fold for the start line number, not just
+"				the end. Replace explicit adaptation with
+"				ingo#range#NetStart() / ingo#range#NetEnd().
 "   1.21.011	11-Feb-2015	FIX: After "Special atoms have distorted the
 "				tally" warning, an additional stray (last
 "				actual) error is repeated. s:Report() also needs
@@ -253,15 +258,13 @@ function! s:Report( line1, line2, pattern, firstMatchLnum, lastMatchLnum, evalua
     return 1
 endfunction
 function! SearchPosition#SearchPosition( line1, line2, pattern, isLiteral )
-    let l:startLine = (a:line1 ? max([a:line1, 1]) : 1)
-    let l:endLine = (a:line2 ? min([a:line2, line('$')]) : line('$'))
-    " If the end of range is in a closed fold, Vim processes all lines inside
-    " the fold, even when '.' or a fixed line number has been specified. We
-    " correct the end line merely for output cosmetics, as the calculation is
-    " not affected by this.
-    let l:endLine = (foldclosed(l:endLine) == -1 ? l:endLine : foldclosedend(l:endLine))
+    " If the start / end of range is in a closed fold, Vim processes all lines
+    " inside the fold, even when '.' or a fixed line number has been specified.
+    " We correct the merely for output cosmetics, as the calculation is not
+    " affected by this.
+    let [l:startLnum, l:endLnum] = [ingo#range#NetStart(a:line1 ? max([a:line1, 1]) : 1), ingo#range#NetEnd(a:line2 ? min([a:line2, line('$')]) : line('$'))]
 "****D echomsg '****' a:line1 a:line2
-"****D echomsg '****' l:startLine l:endLine
+"****D echomsg '****' l:startLnum l:endLnum
 
     " Skip processing if there is no pattern.
     if empty(a:pattern) && (a:isLiteral || empty(@/))
@@ -275,7 +278,7 @@ function! SearchPosition#SearchPosition( line1, line2, pattern, isLiteral )
     let l:cursorLine = line('.')
     let l:cursorVirtCol = virtcol('.')
     let l:isCursorOnClosedFold = (foldclosed(l:cursorLine) != -1)
-    let l:isCursorInsideRange = (l:cursorLine >= l:startLine && l:cursorLine <= l:endLine)
+    let l:isCursorInsideRange = (l:cursorLine >= l:startLnum && l:cursorLine <= l:endLnum)
 
     " This triple records matches relative to the current line or current closed
     " fold.
@@ -283,13 +286,13 @@ function! SearchPosition#SearchPosition( line1, line2, pattern, isLiteral )
     let [l:matchesCurrent, l:firstLnumCurrent, l:lastLnumCurrent] = [0, 0x7FFFFFFF, 0]
     let [l:matchesAfter, l:firstLnumAfter, l:lastLnumAfter]       = [0, 0x7FFFFFFF, 0]
 
-    if l:cursorLine >= l:startLine
+    if l:cursorLine >= l:startLnum
 	let l:lineBeforeCurrent = (l:isCursorInsideRange ?
 	\   (l:isCursorOnClosedFold ? foldclosed(l:cursorLine) : l:cursorLine) - 1 :
-	\   l:endLine
+	\   l:endLnum
 	\)
-	if l:lineBeforeCurrent >= l:startLine
-	    let [l:matchesBefore, l:firstLnumBefore, l:lastLnumBefore] = s:GetMatchesStats(l:startLine . ',' . l:lineBeforeCurrent, a:pattern)
+	if l:lineBeforeCurrent >= l:startLnum
+	    let [l:matchesBefore, l:firstLnumBefore, l:lastLnumBefore] = s:GetMatchesStats(l:startLnum . ',' . l:lineBeforeCurrent, a:pattern)
 	endif
     endif
 
@@ -301,13 +304,13 @@ function! SearchPosition#SearchPosition( line1, line2, pattern, isLiteral )
 	let [l:matchesCurrent, l:firstLnumCurrent, l:lastLnumCurrent] = s:GetMatchesStats('.', a:pattern)
     endif
 
-    if l:cursorLine <= l:endLine
+    if l:cursorLine <= l:endLnum
 	let l:lineAfterCurrent = (l:isCursorInsideRange ?
 	\   (l:isCursorOnClosedFold ? foldclosedend(l:cursorLine) : l:cursorLine) + 1 :
-	\   l:startLine
+	\   l:startLnum
 	\)
-	if l:lineAfterCurrent <= l:endLine
-	    let [l:matchesAfter, l:firstLnumAfter, l:lastLnumAfter] = s:GetMatchesStats(l:lineAfterCurrent . ',' . l:endLine, a:pattern)
+	if l:lineAfterCurrent <= l:endLnum
+	    let [l:matchesAfter, l:firstLnumAfter, l:lastLnumAfter] = s:GetMatchesStats(l:lineAfterCurrent . ',' . l:endLnum, a:pattern)
 	endif
     endif
 
@@ -387,7 +390,7 @@ function! SearchPosition#SearchPosition( line1, line2, pattern, isLiteral )
 "****D echomsg '****' l:before '/' l:exact '/' l:after
     endif
 
-    return s:Report(l:startLine, l:endLine, a:pattern,
+    return s:Report(l:startLnum, l:endLnum, a:pattern,
     \   l:firstLnum, l:lastLnum,
     \   s:Evaluate([l:matchesBefore, l:matchesCurrent, l:matchesAfter, l:before, l:exact, l:after])
     \)
