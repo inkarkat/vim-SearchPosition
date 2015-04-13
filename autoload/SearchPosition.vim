@@ -13,6 +13,13 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.22.013	14-Apr-2015	Also submit the plugin's result message (in
+"				unhighlighted form) to the message history (for
+"				recall and comparison).
+"				Refactoring: Extract s:GetReport() from
+"				s:Report().
+"				Refactoring: Extract s:SearchAndEvaluate() from
+"				SearchPosition#SearchPosition().
 "   1.22.012	16-Mar-2015	BUG: Also need to account for cursor within
 "				closed fold for the start line number, not just
 "				the end. Replace explicit adaptation with
@@ -260,7 +267,7 @@ function! s:Report( isSuccessful, range, evaluationText, matchRange, patternMess
 
     return 1
 endfunction
-function! SearchPosition#SearchPosition( line1, line2, pattern, isLiteral )
+function! s:SearchAndEvaluate( line1, line2, pattern, isLiteral )
     " If the start / end of range is in a closed fold, Vim processes all lines
     " inside the fold, even when '.' or a fixed line number has been specified.
     " We correct the merely for output cosmetics, as the calculation is not
@@ -393,10 +400,24 @@ function! SearchPosition#SearchPosition( line1, line2, pattern, isLiteral )
 "****D echomsg '****' l:before '/' l:exact '/' l:after
     endif
 
-    let [l:isSuccessful, l:range, l:evaluationText, l:matchRange, l:patternMessage] = s:GetReport(
-    \   l:startLnum, l:endLnum, a:pattern,
+    return [
+    \   l:startLnum, l:endLnum,
     \   l:firstLnum, l:lastLnum,
     \   s:Evaluate([l:matchesBefore, l:matchesCurrent, l:matchesAfter, l:before, l:exact, l:after])
+    \]
+endfunction
+function! SearchPosition#SearchPosition( line1, line2, pattern, isLiteral )
+    let [
+    \   l:startLnum, l:endLnum,
+    \   l:firstLnum, l:lastLnum,
+    \   l:evaluation
+    \] = s:SearchAndEvaluate(a:line1, a:line2, a:pattern, a:isLiteral)
+
+    let [l:isSuccessful, l:range, l:evaluationText, l:matchRange, l:patternMessage] = s:GetReport(
+    \   l:startLnum, l:endLnum,
+    \   a:pattern,
+    \   l:firstLnum, l:lastLnum,
+    \   l:evaluation
     \)
 
     return s:Report(l:isSuccessful, l:range, l:evaluationText, l:matchRange, l:patternMessage)
