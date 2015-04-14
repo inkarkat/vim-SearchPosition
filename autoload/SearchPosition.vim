@@ -434,14 +434,16 @@ function! SearchPosition#SearchPosition( line1, line2, pattern, isLiteral )
     return s:Report(l:isSuccessful, l:range, l:evaluationText, l:matchRange, l:patternMessage)
 endfunction
 function! SearchPosition#SearchPositionMultiple( line1, line2, arguments )
-    if ingo#cmdargs#pattern#IsDelimited(a:arguments)
-	let l:patterns = []
-	let l:arguments = a:arguments
-	while ! empty(l:arguments)
-	    let [l:unescapedPattern, l:arguments] = ingo#cmdargs#pattern#ParseUnescaped(l:arguments, '\%(,\s*\(\%([[:alnum:]\\"|]\@![\x00-\xFF]\).*\)\)\?')
-	    call add(l:patterns, l:unescapedPattern)
-	endwhile
-    else
+    let l:patterns = []
+    let l:arguments = a:arguments
+    while ! empty(l:arguments)
+	let [l:unescapedPattern, l:arguments] = ingo#cmdargs#pattern#ParseUnescaped(l:arguments, '\%(,\s*\(\%([[:alnum:]\\"|]\@![\x00-\xFF]\).*\)\)\?')
+	call add(l:patterns, l:unescapedPattern)
+    endwhile
+
+    if len(l:patterns) == 1 && l:patterns[0] ==# a:arguments
+	" No /.../,/.../ delimiters given; this is a list of literal whole
+	" words.
 	let l:patterns = map(
 	\   split(a:arguments, ','),
 	\   'ingo#regexp#FromLiteralText(v:val, 1, "")'
