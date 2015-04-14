@@ -17,6 +17,9 @@
 "				looks better than :.+1 there.
 "				Tweak s:TranslateLocation() for last line and
 "				use :$-N instead of :.-N there.
+"				Tweak s:TranslateLocation() to prefer absolute
+"				numbers over offsets spanning more than half of
+"				the entire buffer.
 "				BUG: Incorrect de-pluralization of "11
 "				match[es]".
 "   1.30.014	14-Apr-2015	Extract s:EchoResult().
@@ -202,6 +205,10 @@ function! s:TranslateLocation( lnum, isShowAbsoluteNumberForCurrentLine, firstVi
 	endif
 
 	let l:offset = a:lnum - line('.')
+	if ingo#compat#abs(l:offset) > line('$') / 2
+	    return a:lnum   " Prefer absolute numbers over offsets spanning more than half of the entire buffer.
+	endif
+
 	return (line('.') == line('$') ? '$' : '.') . (l:offset < 0 ? l:offset : '+' . l:offset)
     elseif line('$') - a:lnum <= g:SearchPosition_MatchRangeShowRelativeEndThreshold
 	return '$-' . (line('$') - a:lnum)
