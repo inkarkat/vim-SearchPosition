@@ -54,6 +54,15 @@ USAGE							*SearchPosition-usage*
 			if omitted) are considered, and the number of matches
 			in relation to the current cursor position is echoed
 			to the command line.
+						     *:SearchPositionMultiple*
+:[range]SearchPositionMultiple /{pattern1}/,/{pattern2}/[,...]
+:[range]SearchPositionMultiple {word1},{word2}[,...]
+			Show positions and tallies of the search results for
+			{pattern1}, {pattern2}, ... Without [/] delimiters,
+			only literal whole {word1}, {word2}, ... are matched.
+			|:search-args| Useful to compare the number of
+			occurrences for multiple variants.
+
 							     *ALT-N* *v_ALT-N*
 <Leader><A-n>{motion}	Show position for the last search pattern in the
 			lines covered by {motion}.
@@ -152,9 +161,12 @@ IDEAS							*SearchPosition-ideas*
 ==============================================================================
 HISTORY						      *SearchPosition-history*
 
-1.22	RELEASEME
+1.30	RELEASEME
 - BUG: Also need to account for cursor within closed fold for the start line
   number, not just the end.
+- Also submit the plugin's result message (in unhighlighted form) to the
+  message history (for recall and comparison).
+- Add :SearchPositionMultiple command.
   *** You need to update to ingo-library (vimscript #4433) version 1.022! ***
 
 1.21	08-Mar-2015
