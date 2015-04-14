@@ -1,0 +1,19 @@
+On first match, 1 following in line, 5 overall; total 6 within 1,74 for /\<foo\>/
+
+2 matches before and 4 after this line; total 6 within 1,74 for /\<foo\>/
+
+5 matches before and 1 after this line; total 6 within 1,.+4 for /\<foo\>/
+
+6 matches before this line within 1,.-15 for /\<foo\>/
+
+1 match before this line at .-1 for /\<Galasaseray\>/
+
+1 match before this line at .-10 for /\<Galasaseray\>/
+
+On sole match in this line, 9 before and 79 after this line; total 89 spanning the entire buffer for /^/
+
+:81,88 8 matches after this line spanning the entire range for /^"/
+
+1 match after cursor in this line, 2 following, 2 in previous lines; total 4 within .-1,22 for /\<line\>/
+
+1 match after cursor in this line, 14 following, 1 in previous lines; total 15 within .-1,$-1 for /on/
