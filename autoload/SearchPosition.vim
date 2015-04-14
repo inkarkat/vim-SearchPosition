@@ -13,6 +13,12 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.30.015	15-Apr-2015	Tweak s:TranslateLocation() for line 1:  :2
+"				looks better than :.+1 there.
+"				Tweak s:TranslateLocation() for last line and
+"				use :$-N instead of :.-N there.
+"				BUG: Incorrect de-pluralization of "11
+"				match[es]".
 "   1.30.014	14-Apr-2015	Extract s:EchoResult().
 "				Add SearchPosition#SearchPositionMultiple() to
 "				implement :SearchPositionMultiple command.
@@ -181,7 +187,7 @@ function! s:Evaluate( matchResults )
 
     let l:evaluation = s:evaluation[ l:matchVector ]
     let l:evaluation = substitute(l:evaluation, '{\%(\d\|+\)\+}', '\=s:ResolveParameters(a:matchResults, submatch(0))', 'g')
-    return [1, substitute(l:evaluation, '\C1 matches' , '1 match', 'g')]
+    return [1, substitute(l:evaluation, '\C^1 matches' , '1 match', 'g')]
 endfunction
 function! s:TranslateLocation( lnum, isShowAbsoluteNumberForCurrentLine, firstVisibleLnum, lastVisibleLnum )
     if a:lnum == line('.')
@@ -191,8 +197,12 @@ function! s:TranslateLocation( lnum, isShowAbsoluteNumberForCurrentLine, firstVi
     elseif a:lnum == 1
 	return '1'
     elseif a:lnum >= a:firstVisibleLnum && a:lnum <= a:lastVisibleLnum
+	if line('.') == 1
+	    return a:lnum   " :2 looks better than :.+1
+	endif
+
 	let l:offset = a:lnum - line('.')
-	return '.' . (l:offset < 0 ? l:offset : '+' . l:offset)
+	return (line('.') == line('$') ? '$' : '.') . (l:offset < 0 ? l:offset : '+' . l:offset)
     elseif line('$') - a:lnum <= g:SearchPosition_MatchRangeShowRelativeEndThreshold
 	return '$-' . (line('$') - a:lnum)
     else
