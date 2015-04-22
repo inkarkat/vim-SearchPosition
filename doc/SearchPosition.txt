@@ -167,6 +167,10 @@ HISTORY						      *SearchPosition-history*
 - Also submit the plugin's result message (in unhighlighted form) to the
   message history (for recall and comparison).
 - Add :SearchPositionMultiple command.
+- Tweak s:TranslateLocation() for line 1:  :2 looks better than :.+1 there.
+- Tweak s:TranslateLocation() for last line and use :$-N instead of :.-N
+  there.
+- BUG: Incorrect de-pluralization of "11 match[es]".
   *** You need to update to ingo-library (vimscript #4433) version 1.022! ***
 
 1.21	08-Mar-2015
