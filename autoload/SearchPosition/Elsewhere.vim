@@ -1,6 +1,7 @@
 " SearchPosition/Elsewhere.vim: Show number of search pattern matches in other buffers.
 "
 " DEPENDENCIES:
+"   - ingo/text.vim autoload script
 "
 " Copyright: (C) 2015 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
@@ -8,7 +9,7 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
-"	001	23-Apr-2015	file creation
+"   1.50.001	23-Apr-2015	file creation
 
 " Modeled after ingo#text#frompattern#Get()
 function! SearchPosition#Elsewhere#Count( firstLine, lastLine, pattern )
@@ -26,10 +27,12 @@ function! SearchPosition#Elsewhere#Count( firstLine, lastLine, pattern )
 "   a:pattern       Regular expression to search. 'ignorecase', 'smartcase' and
 "		    'magic' applies.
 "* RETURN VALUES:
-"   List of [matchesCnt, uniqueLineCnt, firstLnum, lastLnum].
+"   Object with {matchesCnt, uniqueMatchesCnt, uniqueLineCnt, firstLnum,
+"   lastLnum} attributes.
 "******************************************************************************
     let l:save_view = winsaveview()
 	let l:matchesCnt = 0
+	let l:matches = {}
 	let l:lines = {}
 	let [l:firstLnum, l:lastLnum] = [0, 0]
 
@@ -42,9 +45,15 @@ function! SearchPosition#Elsewhere#Count( firstLine, lastLine, pattern )
 	    let l:lastLnum = l:lnum
 	    let l:matchesCnt +=1
 	    let l:lines[l:lnum] = 1
+
+	    let l:endPos = searchpos(a:pattern, 'cenW')
+	    if l:endPos != [0, 0]
+		let l:match = ingo#text#Get(getpos('.')[1:2], l:endPos)
+		let l:matches[l:match] = get(l:matches, l:match, 0) + 1
+	    endif
 	endwhile
     call winrestview(l:save_view)
-    return [l:matchesCnt, len(l:lines), l:firstLnum, l:lastLnum]
+    return {'matchesCnt': l:matchesCnt, 'uniqueMatchesCnt': len(l:matches), 'uniqueLineCnt': len(l:lines), 'firstLnum': l:firstLnum, 'lastLnum': l:lastLnum}
 endfunction
 
 " vim: set ts=8 sts=4 sw=4 noexpandtab ff=unix fdm=syntax :
