@@ -15,7 +15,7 @@ This <TOOL> IS not yet [IMPLEMENTED]! - foo {bar} baz <hehe> hihi hoho
 
 (foo, bar, baz, hehe, hihi, hoho)
 
-This (tool is.not yet) implemented!
+This (tool is.not yet) implemented (too!
 
 This 'one line' is "a (multi line span)ning comment" (hehe). 
 This 'one line' is "a (multi
