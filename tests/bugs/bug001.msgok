@@ -2,4 +2,4 @@ On first match, 1 following in line, 2 overall; total 3 within 2,$ for /\<limita
 
 1 match before and 1 after cursor in this line, 1 in following lines; total 3 within 2,$ for /\<limitations\>/
 
-3 matches after this line within .+1,$ for /\<limitations\>/
+3 matches after this line within 2,$ for /\<limitations\>/
