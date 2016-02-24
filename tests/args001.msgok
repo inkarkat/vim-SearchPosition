@@ -1,7 +1,7 @@
-On first match, 1 following in line, 5 overall; total 6 for /\<foo\>/
+On first match, 1 following in line, 5 overall; total 6 within 1,74 for /\<foo\>/
 
-2 matches after this line for /tool/
+2 matches after this line within 13,18 for /tool/
 
-2 matches after this line for /one line/
+2 matches after this line within 20,21 for /one line/
 
-2 matches after this line for /\(['"]\)one\s\+line\1/
+2 matches after this line within 20,21 for /\(['"]\)one\s\+line\1/
