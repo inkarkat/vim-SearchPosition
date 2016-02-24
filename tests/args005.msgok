@@ -1,0 +1,15 @@
+No match for doesNotMatch
+
+No matches for /doesNotMatch/
+
+Match after this line and further
+
+1 match after cursor in this line, 13 overall within 11,79 for /\n\n/
+
+Match in empty line
+
+1 match before and 12 after this line; total 13 within .-1,79 for /\n\n/
+
+No match in first, empty line
+
+No matches for /doesNotMatch/
