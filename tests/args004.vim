@@ -1,19 +1,18 @@
-" Test argument starting with newline matches. 
+" Test argument starting with newline matches.
 
-SearchPosition \nT
+SearchPosition /\nT/
 normal! 12G0
-SearchPosition \nT
+SearchPosition /\nT/
 
 normal! 13G$
-SearchPosition \nT
+SearchPosition /\nT/
 
 set virtualedit=all
 normal! 13G$l
-SearchPosition \nT
+SearchPosition /\nT/
 
 echomsg 'Test in first, empty line'
 normal! ggO
-SearchPosition \nT
+SearchPosition /\nT/
 
 call vimtest#Quit()
-
