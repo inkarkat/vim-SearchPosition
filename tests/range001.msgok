@@ -1,13 +1,13 @@
-:1 On first match, 1 after cursor in this line for /\<foo\>/
+:1 On first match, 1 after cursor in this line spanning the entire range for /\<foo\>/
 
-:1,15 On first match, 1 following in line, 3 overall; total 4 for /\<foo\>/
+:1,15 On first match, 1 following in line, 3 overall; total 4 within 1,14 for /\<foo\>/
 
-:1,15 2 matches before cursor in this line, 2 in following lines; total 4 for /\<foo\>/
+:1,15 2 matches before cursor in this line, 2 in following lines; total 4 within 1,14 for /\<foo\>/
 
-:1,15 4 matches before this line for /\<foo\>/
+:1,15 4 matches before this line within 1,.-2 for /\<foo\>/
 
-:70,76 1 match after this line for /\<foo\>/
+:70,76 1 match after this line at 74 for /\<foo\>/
 
-:70,76 1 match before this line for /\<foo\>/
+:70,76 1 match before this line at 74 for /\<foo\>/
 
 :70,76 On sole match for /\<foo\>/
