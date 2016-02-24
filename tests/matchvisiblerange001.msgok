@@ -4,7 +4,7 @@ On first match, 1 following in line, 5 overall; total 6 within 1,74 for /\<foo\>
 
 5 matches before and 1 after this line; total 6 within 1,.+4 for /\<foo\>/
 
-6 matches before this line within 1,.-15 for /\<foo\>/
+6 matches before this line within 1,$-15 for /\<foo\>/
 
 1 match before this line at .-1 for /\<Galasaseray\>/
 
