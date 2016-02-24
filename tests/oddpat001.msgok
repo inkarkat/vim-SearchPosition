@@ -13,3 +13,4 @@ On sole match for /\%#<foo/
 Match before cursor but no overall match in line:
 
 Special atoms have distorted the tally for /\%#<foo/
+This is after the command
