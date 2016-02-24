@@ -1,11 +1,11 @@
-6 matches after this line for /\nT/
+6 matches after this line within 12,56 for /\nT/
 
-On sole match in this line, 5 in following lines for /\nT/
+On sole match in this line, 5 in following lines within 12,56 for /\nT/
 
-On sole match in this line, 1 before and 4 after this line; total 6 for /\nT/
+On sole match in this line, 1 before and 4 after this line; total 6 within .-1,56 for /\nT/
 
-On sole match in this line, 1 before and 4 after this line; total 6 for /\nT/
+On sole match in this line, 1 before and 4 after this line; total 6 within .-1,56 for /\nT/
 
 Test in first, empty line
 
-6 matches after this line for /\nT/
+6 matches after this line within 13,57 for /\nT/
