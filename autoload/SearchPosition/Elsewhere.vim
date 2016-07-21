@@ -27,7 +27,7 @@ function! SearchPosition#Elsewhere#Count( firstLine, lastLine, pattern )
 "   a:pattern       Regular expression to search. 'ignorecase', 'smartcase' and
 "		    'magic' applies.
 "* RETURN VALUES:
-"   Object with {matchesCnt, uniqueMatchesCnt, uniqueLineCnt, firstLnum,
+"   Object with {matchesCnt, uniqueMatches, uniqueLineCnt, firstLnum,
 "   lastLnum} attributes.
 "******************************************************************************
     let l:save_view = winsaveview()
@@ -53,7 +53,7 @@ function! SearchPosition#Elsewhere#Count( firstLine, lastLine, pattern )
 	    endif
 	endwhile
     call winrestview(l:save_view)
-    return {'matchesCnt': l:matchesCnt, 'uniqueMatchesCnt': len(l:matches), 'uniqueLineCnt': len(l:lines), 'firstLnum': l:firstLnum, 'lastLnum': l:lastLnum}
+    return {'matchesCnt': l:matchesCnt, 'uniqueMatches': l:matches, 'uniqueLineCnt': len(l:lines), 'firstLnum': l:firstLnum, 'lastLnum': l:lastLnum}
 endfunction
 
 " vim: set ts=8 sts=4 sw=4 noexpandtab ff=unix fdm=syntax :
