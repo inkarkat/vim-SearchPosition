@@ -7,12 +7,14 @@
 "   - ingo/regexp.vim autoload script
 "   - ingo/window/dimensions.vim autoload script
 "
-" Copyright: (C) 2008-2015 Ingo Karkat
+" Copyright: (C) 2008-2016 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.50.016	22-Jul-2016	Expose s:EvaluateMatchRange(), s:Report(),
+"				s:ReportMultiple()..
 "   1.30.015	15-Apr-2015	Tweak s:TranslateLocation() for line 1:  :2
 "				looks better than :.+1 there.
 "				Tweak s:TranslateLocation() for last line and
@@ -97,6 +99,17 @@
 let s:save_cpo = &cpo
 set cpo&vim
 
+function! s:IsValid( pattern, isLiteral )
+    " Skip processing if there is no pattern.
+    if empty(a:pattern) && (a:isLiteral || empty(@/))
+	" Using an empty pattern would cause the previously used search pattern
+	" to be used (if there is any).
+	call ingo#err#Set(a:isLiteral ? 'Nothing selected' : 'E35: No previous regular expression')
+	return 0
+    else
+	return 1
+    endif
+endfunction
 function! s:RecordRange( range )
     let l:lnum = line('.')
     " Assumption: We're invoked with ascending line numbers.
@@ -194,49 +207,48 @@ function! s:Evaluate( matchResults )
     let l:evaluation = substitute(l:evaluation, '{\%(\d\|+\)\+}', '\=s:ResolveParameters(a:matchResults, submatch(0))', 'g')
     return [1, substitute(l:evaluation, '\C^1 matches' , '1 match', 'g')]
 endfunction
-function! s:TranslateLocation( lnum, isShowAbsoluteNumberForCurrentLine, firstVisibleLnum, lastVisibleLnum )
-    if a:lnum == line('.')
-	return (a:isShowAbsoluteNumberForCurrentLine ? a:lnum : '.')
-    elseif a:lnum == line('$')
+function! s:TranslateLocation( lnum, currentLnum, lastLnum, firstVisibleLnum, lastVisibleLnum )
+    if a:lnum == a:currentLnum
+	return a:lnum
+    elseif a:lnum == a:lastLnum
 	return '$'
     elseif a:lnum == 1
 	return '1'
     elseif a:lnum >= a:firstVisibleLnum && a:lnum <= a:lastVisibleLnum
-	if line('.') == 1
+	if a:currentLnum == 1
 	    return a:lnum   " :2 looks better than :.+1
 	endif
 
-	let l:offset = a:lnum - line('.')
-	if ingo#compat#abs(l:offset) > line('$') / 2
+	let l:offset = a:lnum - a:currentLnum
+	if ingo#compat#abs(l:offset) > a:lastLnum / 2
 	    return a:lnum   " Prefer absolute numbers over offsets spanning more than half of the entire buffer.
 	endif
 
-	return (line('.') == line('$') ? '$' : '.') . (l:offset < 0 ? l:offset : '+' . l:offset)
-    elseif line('$') - a:lnum <= g:SearchPosition_MatchRangeShowRelativeEndThreshold
-	return '$-' . (line('$') - a:lnum)
+	return (a:currentLnum == a:lastLnum ? '$' : '.') . (l:offset < 0 ? l:offset : '+' . l:offset)
+    elseif a:lastLnum - a:lnum <= g:SearchPosition_MatchRangeShowRelativeEndThreshold
+	return '$-' . (a:lastLnum - a:lnum)
     else
 	return a:lnum
     endif
 endfunction
-function! s:EvaluateMatchRange( line1, line2, firstMatchLnum, lastMatchLnum )
+function! SearchPosition#EvaluateMatchRange( line1, line2, firstMatchLnum, lastMatchLnum, currentLnum, lastLnum )
     if a:firstMatchLnum == a:line1 && a:lastMatchLnum == a:line2
-	return ' spanning the entire ' . (a:line1 == 1 && a:line2 == line('$') ? 'buffer' : 'range')
+	return ' spanning the entire ' . (a:line1 == 1 && a:line2 == a:lastLnum ? 'buffer' : 'range')
     endif
-
-    let l:isFallsOnCurrentLine = (a:firstMatchLnum == line('.') || a:lastMatchLnum == line('.'))
 
     let [l:firstVisibleLnum, l:lastVisibleLnum] = (g:SearchPosition_MatchRangeShowRelativeThreshold ==# 'visible' ?
     \   ingo#window#dimensions#DisplayedLines() :
-    \   [line('.') - g:SearchPosition_MatchRangeShowRelativeThreshold, line('.') + g:SearchPosition_MatchRangeShowRelativeThreshold]
+    \   [a:currentLnum - g:SearchPosition_MatchRangeShowRelativeThreshold, a:currentLnum + g:SearchPosition_MatchRangeShowRelativeThreshold]
     \)
-    let l:firstLocation = s:TranslateLocation(a:firstMatchLnum, l:isFallsOnCurrentLine, l:firstVisibleLnum, l:lastVisibleLnum)
+
+    let l:firstLocation = s:TranslateLocation(a:firstMatchLnum, a:currentLnum, a:lastLnum, l:firstVisibleLnum, l:lastVisibleLnum)
     if a:firstMatchLnum == a:lastMatchLnum
-	return (a:firstMatchLnum == line('.') ? '' : printf(' at %s', l:firstLocation))
+	return (a:firstMatchLnum == a:currentLnum ? '' : printf(' at %s', l:firstLocation))
     endif
-    let l:lastLocation = s:TranslateLocation(a:lastMatchLnum, l:isFallsOnCurrentLine, l:firstVisibleLnum, l:lastVisibleLnum)
+    let l:lastLocation = s:TranslateLocation(a:lastMatchLnum, a:currentLnum, a:lastLnum, l:firstVisibleLnum, l:lastVisibleLnum)
     return printf(' within %s,%s', l:firstLocation, l:lastLocation)
 endfunction
-function! s:GetReport( line1, line2, pattern, firstMatchLnum, lastMatchLnum, evaluation )
+function! SearchPosition#GetReport( line1, line2, pattern, firstMatchLnum, lastMatchLnum, currentLnum, lastLnum, evaluation )
     let [l:isSuccessful, l:evaluationText] = a:evaluation
 
     let l:range = ''
@@ -244,7 +256,7 @@ function! s:GetReport( line1, line2, pattern, firstMatchLnum, lastMatchLnum, eva
     if l:isSuccessful
 	if g:SearchPosition_ShowRange
 	    let l:range = a:line1 . ',' . a:line2
-	    if a:line1 == 1 && a:line2 == line('$')
+	    if a:line1 == 1 && a:line2 == a:lastLnum
 		let l:range = ''
 	    elseif a:line1 == a:line2
 		let l:range = a:line1
@@ -256,7 +268,7 @@ function! s:GetReport( line1, line2, pattern, firstMatchLnum, lastMatchLnum, eva
 
 	if g:SearchPosition_ShowMatchRange && a:lastMatchLnum != 0
 	    redraw  " This is necessary because of the :redir done earlier.
-	    let l:matchRange = s:EvaluateMatchRange(a:line1, a:line2, a:firstMatchLnum, a:lastMatchLnum)
+	    let l:matchRange = SearchPosition#EvaluateMatchRange(a:line1, a:line2, a:firstMatchLnum, a:lastMatchLnum, a:currentLnum, a:lastLnum)
 	endif
     endif
 
@@ -284,14 +296,14 @@ function! s:EchoResult( isSuccessful, range, evaluationText, matchRange, pattern
     echon a:patternMessage
     if ! a:isSuccessful | echohl None | endif
 endfunction
-function! s:Report( isSuccessful, range, evaluationText, matchRange, patternMessage )
+function! SearchPosition#Report( isSuccessful, range, evaluationText, matchRange, patternMessage )
     echomsg a:range . a:evaluationText . a:matchRange . a:patternMessage
     redraw
 
     call s:EchoResult(a:isSuccessful, a:range, a:evaluationText, a:matchRange, a:patternMessage)
     return 1
 endfunction
-function! s:ReportMultiple( results )
+function! SearchPosition#ReportMultiple( results )
     for [l:isSuccessful, l:range, l:evaluationText, l:matchRange, l:patternMessage] in a:results
 	echomsg l:range . l:evaluationText . l:matchRange . l:patternMessage
 	redraw
@@ -312,11 +324,8 @@ function! s:SearchAndEvaluate( line1, line2, pattern, isLiteral )
 "****D echomsg '****' l:startLnum l:endLnum
 
     " Skip processing if there is no pattern.
-    if empty(a:pattern) && (a:isLiteral || empty(@/))
-	" Using an empty pattern would cause the previously used search pattern
-	" to be used (if there is any).
-	call ingo#err#Set(a:isLiteral ? 'Nothing selected' : 'E35: No previous regular expression')
-	return 0
+    if ! s:IsValid(a:pattern, a:isLiteral)
+	throw 'SearchPosition'
     endif
 
     let l:save_cursor = getpos('.')
@@ -442,20 +451,25 @@ function! s:SearchAndEvaluate( line1, line2, pattern, isLiteral )
     \]
 endfunction
 function! SearchPosition#SearchPosition( line1, line2, pattern, isLiteral )
-    let [
-    \   l:startLnum, l:endLnum,
-    \   l:firstLnum, l:lastLnum,
-    \   l:evaluation
-    \] = s:SearchAndEvaluate(a:line1, a:line2, a:pattern, a:isLiteral)
+    try
+	let [
+	\   l:startLnum, l:endLnum,
+	\   l:firstLnum, l:lastLnum,
+	\   l:evaluation
+	\] = s:SearchAndEvaluate(a:line1, a:line2, a:pattern, a:isLiteral)
 
-    let [l:isSuccessful, l:range, l:evaluationText, l:matchRange, l:patternMessage] = s:GetReport(
-    \   l:startLnum, l:endLnum,
-    \   a:pattern,
-    \   l:firstLnum, l:lastLnum,
-    \   l:evaluation
-    \)
+	let [l:isSuccessful, l:range, l:evaluationText, l:matchRange, l:patternMessage] = SearchPosition#GetReport(
+	\   l:startLnum, l:endLnum,
+	\   a:pattern,
+	\   l:firstLnum, l:lastLnum,
+	\   line('.'), line('$'),
+	\   l:evaluation
+	\)
 
-    return s:Report(l:isSuccessful, l:range, l:evaluationText, l:matchRange, l:patternMessage)
+	return SearchPosition#Report(l:isSuccessful, l:range, l:evaluationText, l:matchRange, l:patternMessage)
+    catch /^SearchPosition/
+	return 0
+    endtry
 endfunction
 function! SearchPosition#SearchPositionMultiple( line1, line2, arguments )
     let l:patterns = []
@@ -489,15 +503,16 @@ function! SearchPosition#SearchPositionMultiple( line1, line2, arguments )
 	\   l:evaluation
 	\] = s:SearchAndEvaluate(a:line1, a:line2, l:pattern, 0)
 
-	call add(l:results, s:GetReport(
+	call add(l:results, SearchPosition#GetReport(
 	\   l:startLnum, l:endLnum,
 	\   l:pattern,
 	\   l:firstLnum, l:lastLnum,
+	\   line('.'), line('$'),
 	\   l:evaluation
 	\))
     endfor
 
-    return s:ReportMultiple(l:results)
+    return SearchPosition#ReportMultiple(l:results)
 endfunction
 
 function! SearchPosition#SavePosition()
@@ -532,6 +547,34 @@ function! SearchPosition#OperatorExpr()
     call SearchPosition#SavePosition()
     set opfunc=SearchPosition#Operator
     return 'g@'
+endfunction
+
+
+
+function! SearchPosition#Windows( firstWinNr, lastWinNr, pattern, isLiteral )
+    if ! s:IsValid(a:pattern, a:isLiteral)
+	return 0
+    endif
+
+    let l:searchResults = [SearchPosition#Elsewhere#Count(1, line('$'), a:pattern)]
+    let l:searchResults[0].id = 1
+
+    let [
+    \   l:startLnum, l:endLnum,
+    \   l:firstLnum, l:lastLnum,
+    \   l:evaluation
+    \] = SearchPosition#Elsewhere#Evaluate('window', l:searchResults)
+    "\] = SearchPosition#Elsewhere#Evaluate('window', "windo"(SearchPosition#Elsewhere#Count(a:pattern, a:isLiteral)))
+
+    let [l:isSuccessful, l:range, l:evaluationText, l:matchRange, l:patternMessage] = SearchPosition#GetReport(
+    \   l:startLnum, l:endLnum,
+    \   a:pattern,
+    \   l:firstLnum, l:lastLnum,
+    \   l:startLnum, l:endLnum,
+    \   [1, l:evaluation]
+    \)
+
+    return SearchPosition#Report(l:isSuccessful, l:range, l:evaluationText, l:matchRange, l:patternMessage)
 endfunction
 
 let &cpo = s:save_cpo
