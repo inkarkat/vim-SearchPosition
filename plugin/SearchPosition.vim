@@ -6,12 +6,13 @@
 "   - ingo/cmdargs/pattern.vim autoload script
 "   - ingo/selection.vim autoload script
 "
-" Copyright: (C) 2008-2014 Ingo Karkat
+" Copyright: (C) 2008-2015 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.30.021	14-Apr-2015	Add :SearchPositionMultiple command.
 "   1.21.020	30-Jun-2014	Add
 "				g:SearchPosition_MatchRangeShowRelativeEndThreshold.
 "   1.20.019	30-May-2014	Add g:SearchPosition_ShowMatchRange config.
@@ -109,7 +110,8 @@ endif
 
 "- commands and mappings ------------------------------------------------------
 
-command! -range=% -nargs=? SearchPosition if ! SearchPosition#SearchPosition(<line1>, <line2>, ingo#cmdargs#pattern#ParseUnescapedWithLiteralWholeWord(<q-args>), 0) | echoerr ingo#err#Get() | endif
+command! -range=% -nargs=? SearchPosition         if ! SearchPosition#SearchPosition(        <line1>, <line2>, ingo#cmdargs#pattern#ParseUnescapedWithLiteralWholeWord(<q-args>), 0) | echoerr ingo#err#Get() | endif
+command! -range=% -nargs=? SearchPositionMultiple if ! SearchPosition#SearchPositionMultiple(<line1>, <line2>, <q-args>) | echoerr ingo#err#Get() | endif
 
 nnoremap <silent> <expr> <Plug>SearchPositionOperator SearchPosition#OperatorExpr()
 if ! hasmapto('<Plug>SearchPositionOperator', 'n')
