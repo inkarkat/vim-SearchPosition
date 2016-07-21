@@ -22,6 +22,8 @@
 "				the entire buffer.
 "				BUG: Incorrect de-pluralization of "11
 "				match[es]".
+"				Also store the results of
+"				:SearchPositionMultiple in the message history.
 "   1.30.014	14-Apr-2015	Extract s:EchoResult().
 "				Add SearchPosition#SearchPositionMultiple() to
 "				implement :SearchPositionMultiple command.
@@ -290,6 +292,11 @@ function! s:Report( isSuccessful, range, evaluationText, matchRange, patternMess
     return 1
 endfunction
 function! s:ReportMultiple( results )
+    for [l:isSuccessful, l:range, l:evaluationText, l:matchRange, l:patternMessage] in a:results
+	echomsg l:range . l:evaluationText . l:matchRange . l:patternMessage
+	redraw
+    endfor
+
     for [l:isSuccessful, l:range, l:evaluationText, l:matchRange, l:patternMessage] in a:results
 	call s:EchoResult(l:isSuccessful, l:range, l:evaluationText, l:matchRange, l:patternMessage)
     endfor
