@@ -98,10 +98,13 @@ USAGE							*SearchPosition-usage*
 			on a blank line.
 
 					      *SearchPosition-mappings-repeat*
-			A repeat of any of the mappings at the same position
-			will extend the reporting to windows (all buffers
-			shown in the current tab page), tab pages, loaded
-			buffers.
+			Repeats of any of the mappings at the same position
+			will extend the reporting to
+			- windows (|:WinSearchPosition|)
+			- tab pages (|:TabSearchPosition|)
+			- arguments (|:ArgSearchPosition|)
+			- loaded buffers (|:BufSearchPosition|)
+			skipping those sources that do not apply.
 
 ==============================================================================
 INSTALLATION					 *SearchPosition-installation*
