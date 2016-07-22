@@ -15,6 +15,24 @@
 " REVISION	DATE		REMARKS
 "   1.50.016	22-Jul-2016	Expose s:EvaluateMatchRange(), s:Report(),
 "				s:ReportMultiple()..
+"				Factor out s:IsValid().
+"				ENH: Also tally unique matches, mostly in
+"				s:Record(), via submatch(0). Pass
+"				a:uniqueMatches to s:Evaluate().
+"				Pass currentLnum and lastLnum to
+"				s:TranslateLocation(),
+"				SearchPosition#EvaluateMatchRange(), and
+"				SearchPosition#GetReport() to make those
+"				independent of the current buffer, and reuse
+"				them for the escalating mappings.
+"				FIX (after 1.22) s:SearchAndEvaluate() returning
+"				0 doesn't fit into the restructuring of its
+"				usual List result, and causes a script error.
+"				Instead, :throw a custom SearchPosition
+"				exception and handle that in a try...catch in
+"				SearchPosition#SearchPosition().
+"				Add SearchPosition#Windows() rump
+"				implementation.
 "   1.30.015	15-Apr-2015	Tweak s:TranslateLocation() for line 1:  :2
 "				looks better than :.+1 there.
 "				Tweak s:TranslateLocation() for last line and
@@ -110,23 +128,26 @@ function! s:IsValid( pattern, isLiteral )
 	return 1
     endif
 endfunction
-function! s:RecordRange( range )
+function! s:Record( record, uniqueMatches )
     let l:lnum = line('.')
     " Assumption: We're invoked with ascending line numbers.
-    if a:range[1] == 0
-	let a:range[0] = l:lnum
-	let a:range[1] = l:lnum
+    if a:record[1] == 0
+	let a:record[0] = l:lnum
+	let a:record[1] = l:lnum
     else
-	let a:range[1] = l:lnum
+	let a:record[1] = l:lnum
     endif
+
+    let l:match = submatch(0)
+    let a:uniqueMatches[l:match] = get(a:uniqueMatches, l:match, 0) + 1
 endfunction
-function! s:GetMatchesStats( range, pattern )
+function! s:GetMatchesStats( range, pattern, uniqueMatches )
     let l:matchesCnt = 0
-    let l:range = [0x7FFFFFFF, 0]
+    let l:record = [0x7FFFFFFF, 0]
 
     redir => l:matches
     try
-	silent execute 'keepjumps' a:range . 's/' . escape(a:pattern, '/') . '/\=s:RecordRange(l:range)/gn'
+	silent execute 'keepjumps' a:range . 's/' . escape(a:pattern, '/') . '/\=s:Record(l:record, a:uniqueMatches)/gn'
 	redir END
 	let l:matchesCnt = str2nr(matchstr( l:matches, '\n\zs\d\+' ))
     catch /^Vim\%((\a\+)\)\=:E486:/ " Pattern not found
@@ -134,7 +155,7 @@ function! s:GetMatchesStats( range, pattern )
 	redir END
     endtry
 
-    return [l:matchesCnt] + l:range
+    return [l:matchesCnt] + l:record
 endfunction
 " The position in the key is a boolean (0/1) whether there are any matches.
 " The placeholder {N} will be filled with the actual number, where N is:
@@ -196,7 +217,7 @@ function! s:ResolveParameters( matchResults, placeholder )
     endfor
     return l:result
 endfunction
-function! s:Evaluate( matchResults )
+function! s:Evaluate( matchResults, uniqueMatches )
     let l:matchVector = join(map(copy(a:matchResults), '!!v:val'), '')
 
     if ! has_key(s:evaluation, l:matchVector)
@@ -205,7 +226,14 @@ function! s:Evaluate( matchResults )
 
     let l:evaluation = s:evaluation[ l:matchVector ]
     let l:evaluation = substitute(l:evaluation, '{\%(\d\|+\)\+}', '\=s:ResolveParameters(a:matchResults, submatch(0))', 'g')
-    return [1, substitute(l:evaluation, '\C^1 matches' , '1 match', 'g')]
+
+    let l:uniqueNum = len(a:uniqueMatches)
+    let l:uniqueEvaluation = (l:uniqueNum == 1 ?
+    \   '' :
+    \   printf(' (%d different)', l:uniqueNum)
+    \)
+
+    return [1, substitute(l:evaluation, '\C^1 matches' , '1 match', 'g') . l:uniqueEvaluation]
 endfunction
 function! s:TranslateLocation( lnum, currentLnum, lastLnum, firstVisibleLnum, lastVisibleLnum )
     if a:lnum == a:currentLnum
@@ -340,13 +368,14 @@ function! s:SearchAndEvaluate( line1, line2, pattern, isLiteral )
     let [l:matchesCurrent, l:firstLnumCurrent, l:lastLnumCurrent] = [0, 0x7FFFFFFF, 0]
     let [l:matchesAfter, l:firstLnumAfter, l:lastLnumAfter]       = [0, 0x7FFFFFFF, 0]
 
+    let l:uniqueMatches = {}
     if l:cursorLine >= l:startLnum
 	let l:lineBeforeCurrent = (l:isCursorInsideRange ?
 	\   (l:isCursorOnClosedFold ? foldclosed(l:cursorLine) : l:cursorLine) - 1 :
 	\   l:endLnum
 	\)
 	if l:lineBeforeCurrent >= l:startLnum
-	    let [l:matchesBefore, l:firstLnumBefore, l:lastLnumBefore] = s:GetMatchesStats(l:startLnum . ',' . l:lineBeforeCurrent, a:pattern)
+	    let [l:matchesBefore, l:firstLnumBefore, l:lastLnumBefore] = s:GetMatchesStats(l:startLnum . ',' . l:lineBeforeCurrent, a:pattern, l:uniqueMatches)
 	endif
     endif
 
@@ -355,7 +384,7 @@ function! s:SearchAndEvaluate( line1, line2, pattern, isLiteral )
 	" closed fold.
 	" We're not interested in matches on the current line if it's outside
 	" the range to be examined.
-	let [l:matchesCurrent, l:firstLnumCurrent, l:lastLnumCurrent] = s:GetMatchesStats('.', a:pattern)
+	let [l:matchesCurrent, l:firstLnumCurrent, l:lastLnumCurrent] = s:GetMatchesStats('.', a:pattern, l:uniqueMatches)
     endif
 
     if l:cursorLine <= l:endLnum
@@ -364,7 +393,7 @@ function! s:SearchAndEvaluate( line1, line2, pattern, isLiteral )
 	\   l:startLnum
 	\)
 	if l:lineAfterCurrent <= l:endLnum
-	    let [l:matchesAfter, l:firstLnumAfter, l:lastLnumAfter] = s:GetMatchesStats(l:lineAfterCurrent . ',' . l:endLnum, a:pattern)
+	    let [l:matchesAfter, l:firstLnumAfter, l:lastLnumAfter] = s:GetMatchesStats(l:lineAfterCurrent . ',' . l:endLnum, a:pattern, l:uniqueMatches)
 	endif
     endif
 
@@ -447,7 +476,7 @@ function! s:SearchAndEvaluate( line1, line2, pattern, isLiteral )
     return [
     \   l:startLnum, l:endLnum,
     \   l:firstLnum, l:lastLnum,
-    \   s:Evaluate([l:matchesBefore, l:matchesCurrent, l:matchesAfter, l:before, l:exact, l:after])
+    \   s:Evaluate([l:matchesBefore, l:matchesCurrent, l:matchesAfter, l:before, l:exact, l:after], l:uniqueMatches)
     \]
 endfunction
 function! SearchPosition#SearchPosition( line1, line2, pattern, isLiteral )
@@ -556,7 +585,8 @@ function! SearchPosition#Windows( firstWinNr, lastWinNr, pattern, isLiteral )
 	return 0
     endif
 
-    let l:searchResults = [SearchPosition#Elsewhere#Count(1, line('$'), a:pattern)]
+    let l:uniqueMatches = {}
+    let l:searchResults = [SearchPosition#Elsewhere#Count(1, line('$'), a:pattern, l:uniqueMatches)]
     let l:searchResults[0].id = 1
 
     let [
