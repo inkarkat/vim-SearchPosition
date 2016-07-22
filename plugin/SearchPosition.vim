@@ -6,12 +6,13 @@
 "   - ingo/cmdargs/pattern.vim autoload script
 "   - ingo/selection.vim autoload script
 "
-" Copyright: (C) 2008-2015 Ingo Karkat
+" Copyright: (C) 2008-2016 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   1.50.022	22-Jul-2016	Add :WinSearchPosition command.
 "   1.30.021	14-Apr-2015	Add :SearchPositionMultiple command.
 "   1.21.020	30-Jun-2014	Add
 "				g:SearchPosition_MatchRangeShowRelativeEndThreshold.
@@ -112,6 +113,13 @@ endif
 
 command! -range=% -nargs=? SearchPosition         if ! SearchPosition#SearchPosition(        <line1>, <line2>, ingo#cmdargs#pattern#ParseUnescapedWithLiteralWholeWord(<q-args>), 0) | echoerr ingo#err#Get() | endif
 command! -range=% -nargs=? SearchPositionMultiple if ! SearchPosition#SearchPositionMultiple(<line1>, <line2>, <q-args>) | echoerr ingo#err#Get() | endif
+
+if v:version == 704 && has('patch530') || v:version > 704
+command! -addr=windows -range=% -nargs=? WinSearchPosition  if ! SearchPosition#Windows(<line1>, <line2>, ingo#cmdargs#pattern#ParseUnescapedWithLiteralWholeWord(<q-args>), 0) | echoerr ingo#err#Get() | endif
+else
+command!                        -nargs=? WinSearchPosition  if ! SearchPosition#Windows(1, winnr('$'),    ingo#cmdargs#pattern#ParseUnescapedWithLiteralWholeWord(<q-args>), 0) | echoerr ingo#err#Get() | endif
+endif
+
 
 nnoremap <silent> <expr> <Plug>SearchPositionOperator SearchPosition#OperatorExpr()
 if ! hasmapto('<Plug>SearchPositionOperator', 'n')
