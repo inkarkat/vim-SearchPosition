@@ -84,6 +84,27 @@ function! SearchPosition#Elsewhere#Count( firstLine, lastLine, pattern, uniqueMa
     \}
 endfunction
 
+function! s:BufferIdentification( bufNr )
+    " TODO: Include (shortened) buffer name, but truncated to 1/3 of &columns
+    return printf('#%d', a:bufNr)
+endfunction
+function! SearchPosition#Elsewhere#EvaluateOne( what, searchResult )
+    let l:uniqueNum = len(a:searchResult.uniqueMatches)
+    let l:uniqueEvaluation = (l:uniqueNum == 1 ?
+    \   '' :
+    \   printf(' (%d different)', l:uniqueNum)
+    \)
+    return [
+    \   1, a:searchResult.lastLnum,
+    \   a:searchResult.firstMatchLnum, a:searchResult.lastMatchLnum,
+    \   printf('%s has %d match%s%s',
+    \       s:BufferIdentification(a:searchResult.bufNr),
+    \       a:searchResult.matchesCnt,
+    \       (a:searchResult.matchesCnt == 1 ? '' : 'es'),
+    \       l:uniqueEvaluation
+    \   )
+    \]
+endfunction
 function! SearchPosition#Elsewhere#Evaluate( what, searchResults )
     let l:positiveResults = filter(copy(a:searchResults), 'v:val.matchesCnt > 0')
 
@@ -91,22 +112,7 @@ function! SearchPosition#Elsewhere#Evaluate( what, searchResults )
     if l:positiveResultNum == 0
 	return [0, 0, 0, 0, printf('No matches in %ss', a:what)]
     elseif l:positiveResultNum == 1
-	let l:uniqueNum = len(l:positiveResults[0].uniqueMatches)
-	let l:uniqueEvaluation = (l:uniqueNum == 1 ?
-	\   '' :
-	\   printf(' (%d different)', l:uniqueNum)
-	\)
-	return [
-	\   1, l:positiveResults[0].lastLnum,
-	\   l:positiveResults[0].firstMatchLnum, l:positiveResults[0].lastMatchLnum,
-	\   printf('%s %s has %d match%s%s',
-	\       a:what,
-	\       l:positiveResults[0].id,
-	\       l:positiveResults[0].matchesCnt,
-	\       (l:positiveResults[0].matchesCnt == 1 ? '' : 'es'),
-	\       l:uniqueEvaluation
-	\   )
-	\]
+	return SearchPosition#Elsewhere#EvaluateOne(a:what, l:positiveResults[0])
     else
 	return [0, 0, 0, 0, printf('TODO:match summary')]
     endif
