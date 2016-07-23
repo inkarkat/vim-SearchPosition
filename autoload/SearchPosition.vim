@@ -580,31 +580,52 @@ endfunction
 
 
 
-function! SearchPosition#Windows( firstWinNr, lastWinNr, pattern, isLiteral )
+function! SearchPosition#Windows( isVerbose, firstWinNr, lastWinNr, pattern, isLiteral )
     if ! s:IsValid(a:pattern, a:isLiteral)
 	return 0
     endif
 
     let l:uniqueMatches = {}
     let l:searchResults = [SearchPosition#Elsewhere#Count(1, line('$'), a:pattern, l:uniqueMatches)]
-    let l:searchResults[0].id = 1
+    "windo"(SearchPosition#Elsewhere#Count(a:pattern, a:isLiteral)))
+    let l:searchResults[0].bufNr = bufnr('')
 
-    let [
-    \   l:startLnum, l:endLnum,
-    \   l:firstLnum, l:lastLnum,
-    \   l:evaluation
-    \] = SearchPosition#Elsewhere#Evaluate('window', l:searchResults)
-    "\] = SearchPosition#Elsewhere#Evaluate('window', "windo"(SearchPosition#Elsewhere#Count(a:pattern, a:isLiteral)))
+    if a:isVerbose
+	let l:results = []
+	for l:searchResult in l:searchResults
+	    let [
+	    \   l:startLnum, l:endLnum,
+	    \   l:firstLnum, l:lastLnum,
+	    \   l:evaluation
+	    \] = SearchPosition#Elsewhere#EvaluateOne('window', l:searchResult)
 
-    let [l:isSuccessful, l:range, l:evaluationText, l:matchRange, l:patternMessage] = SearchPosition#GetReport(
-    \   l:startLnum, l:endLnum,
-    \   a:pattern,
-    \   l:firstLnum, l:lastLnum,
-    \   l:startLnum, l:endLnum,
-    \   [1, l:evaluation]
-    \)
+	    call add(l:results, SearchPosition#GetReport(
+	    \   l:startLnum, l:endLnum,
+	    \   a:pattern,
+	    \   l:firstLnum, l:lastLnum,
+	    \   l:startLnum, l:endLnum,
+	    \   [1, l:evaluation]
+	    \))
+	endfor
 
-    return SearchPosition#Report(l:isSuccessful, l:range, l:evaluationText, l:matchRange, l:patternMessage)
+	return SearchPosition#ReportMultiple(l:results)
+    else
+	let [
+	\   l:startLnum, l:endLnum,
+	\   l:firstLnum, l:lastLnum,
+	\   l:evaluation
+	\] = SearchPosition#Elsewhere#Evaluate('window', l:searchResults)
+
+	let [l:isSuccessful, l:range, l:evaluationText, l:matchRange, l:patternMessage] = SearchPosition#GetReport(
+	\   l:startLnum, l:endLnum,
+	\   a:pattern,
+	\   l:firstLnum, l:lastLnum,
+	\   l:startLnum, l:endLnum,
+	\   [1, l:evaluation]
+	\)
+
+	return SearchPosition#Report(l:isSuccessful, l:range, l:evaluationText, l:matchRange, l:patternMessage)
+    endif
 endfunction
 
 let &cpo = s:save_cpo
