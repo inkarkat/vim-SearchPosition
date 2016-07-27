@@ -147,7 +147,7 @@ function! s:Record( record, uniqueMatches )
     let l:match = submatch(0)
     let a:uniqueMatches[l:match] = get(a:uniqueMatches, l:match, 0) + 1
 endfunction
-function! s:GetMatchesStats( range, pattern, uniqueMatches )
+function! SearchPosition#GetMatchesStats( range, pattern, uniqueMatches )
     let l:matchesCnt = 0
     let l:record = [0x7FFFFFFF, 0]
 
@@ -384,7 +384,7 @@ function! s:SearchAndEvaluate( line1, line2, pattern, isLiteral )
 	\   l:endLnum
 	\)
 	if l:lineBeforeCurrent >= l:startLnum
-	    let [l:matchesBefore, l:firstLnumBefore, l:lastLnumBefore] = s:GetMatchesStats(l:startLnum . ',' . l:lineBeforeCurrent, a:pattern, l:uniqueMatches)
+	    let [l:matchesBefore, l:firstLnumBefore, l:lastLnumBefore] = SearchPosition#GetMatchesStats(l:startLnum . ',' . l:lineBeforeCurrent, a:pattern, l:uniqueMatches)
 	endif
     endif
 
@@ -393,7 +393,7 @@ function! s:SearchAndEvaluate( line1, line2, pattern, isLiteral )
 	" closed fold.
 	" We're not interested in matches on the current line if it's outside
 	" the range to be examined.
-	let [l:matchesCurrent, l:firstLnumCurrent, l:lastLnumCurrent] = s:GetMatchesStats('.', a:pattern, l:uniqueMatches)
+	let [l:matchesCurrent, l:firstLnumCurrent, l:lastLnumCurrent] = SearchPosition#GetMatchesStats('.', a:pattern, l:uniqueMatches)
     endif
 
     if l:cursorLine <= l:endLnum
@@ -402,7 +402,7 @@ function! s:SearchAndEvaluate( line1, line2, pattern, isLiteral )
 	\   l:startLnum
 	\)
 	if l:lineAfterCurrent <= l:endLnum
-	    let [l:matchesAfter, l:firstLnumAfter, l:lastLnumAfter] = s:GetMatchesStats(l:lineAfterCurrent . ',' . l:endLnum, a:pattern, l:uniqueMatches)
+	    let [l:matchesAfter, l:firstLnumAfter, l:lastLnumAfter] = SearchPosition#GetMatchesStats(l:lineAfterCurrent . ',' . l:endLnum, a:pattern, l:uniqueMatches)
 	endif
     endif
 
