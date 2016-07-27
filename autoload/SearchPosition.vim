@@ -282,7 +282,7 @@ function! SearchPosition#GetReport( line1, line2, pattern, firstMatchLnum, lastM
     let l:range = ''
     let l:matchRange = ''
     if l:isSuccessful
-	if g:SearchPosition_ShowRange
+	if g:SearchPosition_ShowRange && a:line1 != 0 && a:line2 != 0
 	    let l:range = a:line1 . ',' . a:line2
 	    if a:line1 == 1 && a:line2 == a:lastLnum
 		let l:range = ''
@@ -589,6 +589,8 @@ function! SearchPosition#Windows( isVerbose, firstWinNr, lastWinNr, pattern, isL
     let l:searchResults = [SearchPosition#Elsewhere#Count(1, line('$'), a:pattern, l:uniqueMatches)]
     "windo"(SearchPosition#Elsewhere#Count(a:pattern, a:isLiteral)))
     let l:searchResults[0].bufNr = bufnr('')
+    call add(l:searchResults, l:searchResults[0])
+    let l:uniqueBufferNum = winnr('$') " TODO
 
     if a:isVerbose
 	let l:results = []
@@ -614,7 +616,7 @@ function! SearchPosition#Windows( isVerbose, firstWinNr, lastWinNr, pattern, isL
 	\   l:startLnum, l:endLnum,
 	\   l:firstLnum, l:lastLnum,
 	\   l:evaluation
-	\] = SearchPosition#Elsewhere#Evaluate('window', l:searchResults)
+	\] = SearchPosition#Elsewhere#Evaluate('window', l:searchResults, l:uniqueMatches, l:uniqueBufferNum)
 
 	let [l:isSuccessful, l:range, l:evaluationText, l:matchRange, l:patternMessage] = SearchPosition#GetReport(
 	\   l:startLnum, l:endLnum,
