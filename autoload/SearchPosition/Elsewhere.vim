@@ -105,7 +105,7 @@ function! SearchPosition#Elsewhere#EvaluateOne( what, searchResult )
     \   )
     \]
 endfunction
-function! SearchPosition#Elsewhere#Evaluate( what, searchResults )
+function! SearchPosition#Elsewhere#Evaluate( what, searchResults, uniqueGlobalMatches, uniqueBufferNum )
     let l:positiveResults = filter(copy(a:searchResults), 'v:val.matchesCnt > 0')
 
     let l:positiveResultNum = len(l:positiveResults)
@@ -114,7 +114,25 @@ function! SearchPosition#Elsewhere#Evaluate( what, searchResults )
     elseif l:positiveResultNum == 1
 	return SearchPosition#Elsewhere#EvaluateOne(a:what, l:positiveResults[0])
     else
-	return [0, 0, 0, 0, printf('TODO:match summary')]
+	let l:uniqueNum = len(a:uniqueGlobalMatches)
+	let l:uniqueEvaluation = (l:uniqueNum == 1 ?
+	\   '' :
+	\   printf(' (%d different)', l:uniqueNum)
+	\)
+
+	let l:matchesCnt = ingo#collections#Reduce(
+	\   l:positiveResults,
+	\   'v:val[0] + v:val[1].matchesCnt',
+	\   0
+	\)
+
+	let l:evaluation = printf('%s buffers have %d match%s%s',
+	\   (l:positiveResultNum == a:uniqueBufferNum ? 'All' : printf('%d of %d', l:positiveResultNum, a:uniqueBufferNum)),
+	\   l:matchesCnt,
+	\   (l:matchesCnt == 1 ? '' : 'es'),
+	\   l:uniqueEvaluation
+	\)
+	return [0, 0, 0, 0, l:evaluation]
     endif
 endfunction
 
