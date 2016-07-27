@@ -115,9 +115,9 @@ command! -range=% -nargs=? SearchPosition         if ! SearchPosition#SearchPosi
 command! -range=% -nargs=? SearchPositionMultiple if ! SearchPosition#SearchPositionMultiple(<line1>, <line2>, <q-args>) | echoerr ingo#err#Get() | endif
 
 if v:version == 704 && has('patch530') || v:version > 704
-command! -addr=windows -range=% -nargs=? WinSearchPosition  if ! SearchPosition#Windows(<line1>, <line2>, ingo#cmdargs#pattern#ParseUnescapedWithLiteralWholeWord(<q-args>), 0) | echoerr ingo#err#Get() | endif
+command! -addr=windows -range=% -bang -nargs=? WinSearchPosition  if ! SearchPosition#Windows(<bang>0, <line1>, <line2>, ingo#cmdargs#pattern#ParseUnescapedWithLiteralWholeWord(<q-args>), 0) | echoerr ingo#err#Get() | endif
 else
-command!                        -nargs=? WinSearchPosition  if ! SearchPosition#Windows(1, winnr('$'),    ingo#cmdargs#pattern#ParseUnescapedWithLiteralWholeWord(<q-args>), 0) | echoerr ingo#err#Get() | endif
+command!                        -bang -nargs=? WinSearchPosition  if ! SearchPosition#Windows(<bang>0, 1, winnr('$'),    ingo#cmdargs#pattern#ParseUnescapedWithLiteralWholeWord(<q-args>), 0) | echoerr ingo#err#Get() | endif
 endif
 
 
