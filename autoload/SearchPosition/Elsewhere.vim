@@ -2,6 +2,7 @@
 "
 " DEPENDENCIES:
 "   - ingo/text.vim autoload script
+"   - SearchPosition.vim autoload script
 "
 " Copyright: (C) 2015-2016 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
@@ -19,6 +20,9 @@
 "				SearchPosition#Elsewhere#Evaluate[One](). Use
 "				that to turn off highlighting when there are no
 "				matches.
+"				Reimplement SearchPosition#Elsewhere#Count()
+"				with :%s///gn by delegating to
+"				SearchPosition#GetMatchesStats().
 "   1.50.002	22-Jul-2016	Pass a:uniqueMatches to
 "				SearchPosition#Elsewhere#Count() to also tally
 "				unique matches across invocations.
@@ -31,48 +35,27 @@ let s:save_cpo = &cpo
 set cpo&vim
 
 " Modeled after ingo#text#frompattern#Get()
-function! SearchPosition#Elsewhere#Count( firstLine, lastLine, pattern, uniqueMatches )
+function! SearchPosition#Elsewhere#Count( firstLnum, lastLnum, pattern, uniqueMatches )
 "******************************************************************************
 "* PURPOSE:
-"   Count all matches of a:pattern in the a:firstLine, a:lastLine range and
+"   Count all matches of a:pattern in the a:firstLnum, a:lastLnum range and
 "   return them.
 "* ASSUMPTIONS / PRECONDITIONS:
 "   None.
 "* EFFECTS / POSTCONDITIONS:
 "   None.
 "* INPUTS:
-"   a:firstLine     Start line number to search.
-"   a:lastLine      End line number to search.
+"   a:firstLnum     Start line number to search.
+"   a:lastLnum      End line number to search.
 "   a:pattern       Regular expression to search. 'ignorecase', 'smartcase' and
 "		    'magic' applies.
 "   a:uniqueMatches Dictionary that counts unique matches across invocations.
 "* RETURN VALUES:
-"   Object with {bufNr, matchesCnt, uniqueMatches, uniqueLineCnt, firstLnum,
-"   lastLnum} attributes.
+"   Object with both buffer and search result attributes.
 "******************************************************************************
+    let l:uniqueMatches = {}
     let l:save_view = winsaveview()
-	let l:matchesCnt = 0
-	let l:uniqueMatches = {}
-	let l:lines = {}
-	let [l:firstLnum, l:lastLnum] = [0, 0]
-
-	call cursor(a:firstLine, 1)
-	let l:isFirst = 1
-	while 1
-	    let l:lnum = search(a:pattern, (l:isFirst ? 'c' : '') . 'W', a:lastLine)
-	    if l:lnum == 0 | break | endif
-	    if l:isFirst | let l:firstLnum = l:lnum | let l:isFirst = 0 | endif
-	    let l:lastLnum = l:lnum
-	    let l:matchesCnt +=1
-	    let l:lines[l:lnum] = 1
-
-	    let l:endPos = searchpos(a:pattern, 'cenW')
-	    if l:endPos != [0, 0]
-		let l:match = ingo#text#Get(getpos('.')[1:2], l:endPos)
-		let l:uniqueMatches[l:match] = get(l:uniqueMatches, l:match, 0) + 1
-		let a:uniqueMatches[l:match] = get(a:uniqueMatches, l:match, 0) + 1
-	    endif
-	endwhile
+	let [l:matchesCnt, l:firstLnum, l:lastLnum] = SearchPosition#GetMatchesStats(a:firstLnum . ',' . a:lastLnum, a:pattern, l:uniqueMatches)
     call winrestview(l:save_view)
 
     let [l:firstVisibleLnum, l:lastVisibleLnum] = (g:SearchPosition_MatchRangeShowRelativeThreshold ==# 'visible' ?
@@ -83,13 +66,13 @@ function! SearchPosition#Elsewhere#Count( firstLine, lastLine, pattern, uniqueMa
     return {
     \   'bufNr': bufnr(''),
     \   'currentLnum': line('.'),
-    \   'lastLnum': line('$'),
+    \   'firstLnum': a:firstLnum,
+    \   'lastLnum': a:lastLnum,
     \   'firstVisibleLnum': l:firstVisibleLnum,
     \   'lastVisibleLnum': l:lastVisibleLnum,
     \
     \   'matchesCnt': l:matchesCnt,
     \   'uniqueMatches': l:uniqueMatches,
-    \   'uniqueLineCnt': len(l:lines),
     \   'firstMatchLnum': l:firstLnum,
     \   'lastMatchLnum': l:lastLnum
     \}
@@ -108,7 +91,7 @@ function! SearchPosition#Elsewhere#EvaluateOne( what, searchResult )
     let l:isMatches = (a:searchResult.matchesCnt > 0)
     return [
     \   l:isMatches,
-    \   1, a:searchResult.lastLnum,
+    \   a:searchResult.firstLnum, a:searchResult.lastLnum,
     \   a:searchResult.firstMatchLnum, a:searchResult.lastMatchLnum,
     \   printf('%s has %s match%s%s',
     \       s:BufferIdentification(a:searchResult.bufNr),
@@ -128,7 +111,7 @@ function! SearchPosition#Elsewhere#Evaluate( what, searchResults, uniqueGlobalMa
 	return SearchPosition#Elsewhere#EvaluateOne(a:what, l:positiveResults[0])
     else
 	let l:uniqueNum = len(a:uniqueGlobalMatches)
-	let l:uniqueEvaluation = (l:uniqueNum == 1 ?
+	let l:uniqueEvaluation = (l:uniqueNum <= 1 ?
 	\   '' :
 	\   printf(' (%d different)', l:uniqueNum)
 	\)
@@ -193,8 +176,7 @@ function! SearchPosition#Elsewhere#Windows( isVerbose, firstWinNr, lastWinNr, sk
     try
 	for l:winNr in range(1, winnr('$'))
 	    let l:bufNr = winbufnr(l:winNr)
-	    if l:bufNr != l:originalBufNr &&
-	    \   ! has_key(l:alreadySearchedBuffers, l:bufNr)
+	    if ! has_key(l:alreadySearchedBuffers, l:bufNr)
 		execute 'noautocmd' l:winNr . 'wincmd w'
 
 		call add(l:searchResults, SearchPosition#Elsewhere#Count(1, line('$'), a:pattern, l:uniqueMatches))
@@ -215,6 +197,7 @@ function! SearchPosition#Elsewhere#Windows( isVerbose, firstWinNr, lastWinNr, sk
 
 
 
+    let l:what = (a:skipWinNr == -1 ? '' : 'other ') . 'window'
     if a:isVerbose
 	let l:results = []
 	let l:isShowPattern = g:SearchPosition_ShowPattern
@@ -224,7 +207,7 @@ function! SearchPosition#Elsewhere#Windows( isVerbose, firstWinNr, lastWinNr, sk
 	    \   l:startLnum, l:endLnum,
 	    \   l:firstLnum, l:lastLnum,
 	    \   l:evaluation
-	    \] = SearchPosition#Elsewhere#EvaluateOne('window', l:searchResult)
+	    \] = SearchPosition#Elsewhere#EvaluateOne(l:what, l:searchResult)
 
 	    call add(l:results, SearchPosition#GetReport(
 	    \   l:startLnum, l:endLnum,
@@ -244,7 +227,7 @@ function! SearchPosition#Elsewhere#Windows( isVerbose, firstWinNr, lastWinNr, sk
 	\   l:startLnum, l:endLnum,
 	\   l:firstLnum, l:lastLnum,
 	\   l:evaluation
-	\] = SearchPosition#Elsewhere#Evaluate('window', l:searchResults, l:uniqueMatches)
+	\] = SearchPosition#Elsewhere#Evaluate(l:what, l:searchResults, l:uniqueMatches)
 
 	let [l:isSuccessful, l:range, l:evaluationText, l:matchRange, l:patternMessage] = SearchPosition#GetReport(
 	\   l:startLnum, l:endLnum,
