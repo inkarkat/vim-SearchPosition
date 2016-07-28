@@ -12,7 +12,8 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
-"   1.50.023	28-Jul-2016	Move SearchPosition#Windows() to
+"   2.00.024	29-Jul-2016	Add :TabSearchPosition.
+"   2.00.023	28-Jul-2016	Move SearchPosition#Windows() to
 "				SearchPosition#Elsewhere#Windows(). Add
 "				a:skipWinNr argument.
 "				BUG: {Visual}<A-m> uses selected text as
@@ -119,7 +120,7 @@ if ! exists('g:SearchPosition_MatchRangeShowRelativeEndThreshold')
 endif
 
 
-"- commands and mappings ------------------------------------------------------
+"- commands --------------------------------------------------------------------
 
 command!       -range=% -nargs=? SearchPosition           if ! SearchPosition#SearchPosition(                          <line1>, <line2>, ingo#cmdargs#pattern#ParseUnescapedWithLiteralWholeWord(<q-args>), 0) | echoerr ingo#err#Get() | endif
 command! -bang -range=% -nargs=? SearchPositionWithRepeat if ! SearchPosition#SearchPositionRepeat('Current', <bang>0, <line1>, <line2>, ingo#cmdargs#pattern#ParseUnescapedWithLiteralWholeWord(<q-args>), 0) | echoerr ingo#err#Get() | endif
@@ -127,10 +128,14 @@ command!       -range=% -nargs=? SearchPositionMultiple   if ! SearchPosition#Se
 
 if v:version == 704 && has('patch530') || v:version > 704
 command! -addr=windows -range=% -bang -nargs=? WinSearchPosition  if ! SearchPosition#Elsewhere#Windows(<bang>0, <line1>, <line2>, -1, ingo#cmdargs#pattern#ParseUnescapedWithLiteralWholeWord(<q-args>), 0) | echoerr ingo#err#Get() | endif
+command! -addr=tabs    -range=% -bang -nargs=? TabSearchPosition  if ! SearchPosition#Elsewhere#Tabs(   <bang>0, <line1>, <line2>, -1, ingo#cmdargs#pattern#ParseUnescapedWithLiteralWholeWord(<q-args>), 0) | echoerr ingo#err#Get() | endif
 else
 command!                        -bang -nargs=? WinSearchPosition  if ! SearchPosition#Elsewhere#Windows(<bang>0, 1, winnr('$'),    -1, ingo#cmdargs#pattern#ParseUnescapedWithLiteralWholeWord(<q-args>), 0) | echoerr ingo#err#Get() | endif
+command!                        -bang -nargs=? TabSearchPosition  if ! SearchPosition#Elsewhere#Tabs(   <bang>0, <line1>, <line2>, -1, ingo#cmdargs#pattern#ParseUnescapedWithLiteralWholeWord(<q-args>), 0) | echoerr ingo#err#Get() | endif
 endif
 
+
+"- mappings --------------------------------------------------------------------
 
 nnoremap <silent> <expr> <Plug>SearchPositionOperator SearchPosition#OperatorExpr()
 if ! hasmapto('<Plug>SearchPositionOperator', 'n')
