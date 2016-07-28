@@ -63,6 +63,7 @@ USAGE							*SearchPosition-usage*
 			|:search-args| Useful to compare the number of
 			occurrences for multiple variants.
 
+							  *:WinSearchPosition*
 :[range]WinSearchPosition[!] [/][{pattern}][/]
 			Show number and distribution of the search results
 			in all buffers shown in the current tab page. With
@@ -70,6 +71,29 @@ USAGE							*SearchPosition-usage*
 			about every covered buffer, not just a summary.
 			If [range] is given only in windows for which the
 			window number lies in the [range].
+							  *:TabSearchPosition*
+:[range]TabSearchPosition[!] [/][{pattern}][/]
+			Show number and distribution of the search results
+			in all buffers shown in all tab pages. With [!], shows
+			a verbose report with match statistics about every
+			covered buffer, not just a summary. If [range] is
+			given only in tab pages for which the tab page number
+			lies in the [range].
+							  *:ArgSearchPosition*
+:[range]ArgSearchPosition[!] [/][{pattern}][/]
+			Show number and distribution of the search results
+			in all buffers in the |argument-list|. With [!], shows
+			a verbose report with match statistics about every
+			covered buffer, not just a summary. If [range] is
+			given only covers those arguments.
+							  *:BufSearchPosition*
+:[range]BufSearchPosition[!] [/][{pattern}][/]
+			Show number and distribution of the search results
+			in all listed buffers. With [!], shows a verbose
+			report with match statistics about every covered
+			buffer, not just a summary. If [range] is given only
+			covers those buffers.
+
 						     *SearchPosition-mappings*
 							     *ALT-N* *v_ALT-N*
 <Leader><A-n>{motion}	Show position for the last search pattern in the
@@ -91,6 +115,8 @@ USAGE							*SearchPosition-usage*
 [count]g<A-m>		Show position for the word under the cursor in the
 			entire buffer, or [count] following lines.
 			Also finds contained matches, like |gstar|.
+			When repeated at the same position, switches to
+			verbose reporting, like |g_ALT-N|.
 
 {Visual}<A-m>		Show position for the selected text in the entire
 			buffer.
@@ -109,9 +135,13 @@ USAGE							*SearchPosition-usage*
 			- loaded buffers (|:BufSearchPosition|)
 			skipping those sources that do not exist.
 								     *g_ALT-N*
-g<A-n>			A repeat with a "g" prefix will show a verbose report
-g<A-m>			that shows match statistics about every covered
-			buffer,	not just a summary.
+g<A-n>			A repeat with a "g" prefix at the same position will
+g<A-m>			show a verbose report that shows match statistics
+			about every covered buffer, not just a summary.
+			g<A-n> can also be used anywhere to start a verbose
+			report for all windows; g<A-m> cannot, because it is
+			overloaded with showing the position of the word under
+			the cursor.
 
 ==============================================================================
 INSTALLATION					 *SearchPosition-installation*
@@ -127,7 +157,7 @@ To uninstall, use the |:RmVimball| command.
 DEPENDENCIES					 *SearchPosition-dependencies*
 
 - Requires Vim 7.0 or higher.
-- Requires the |ingo-library.vim| plugin (vimscript #4433), version 1.022 or
+- Requires the |ingo-library.vim| plugin (vimscript #4433), version 1.025 or
   higher.
 
 ==============================================================================
@@ -182,6 +212,15 @@ IDEAS							*SearchPosition-ideas*
 
 ==============================================================================
 HISTORY						      *SearchPosition-history*
+
+2.00	RELEASEME
+- ENH: Add widening of search scope on mapping repeat at the same position,
+  and verbose search result reporting.
+- Add :WinSearchPosition, :TabSearchPosition, :ArgSearchPosition,
+  :BufSearchPosition commands.
+- BUG: {Visual}<A-m> uses selected text as pattern, not as literal text. Add
+  escaping.
+  *** You need to update to ingo-library (vimscript #4433) version 1.025! ***
 
 1.30	23-Apr-2015
 - BUG: Also need to account for cursor within closed fold for the start line
