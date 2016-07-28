@@ -4,6 +4,7 @@
 "   - ingo/avoidprompt.vim autoload script
 "   - ingo/compat.vim autoload script
 "   - ingo/range.vim autoload script
+"   - ingo/record.vim autoload script
 "   - ingo/regexp.vim autoload script
 "   - ingo/window/dimensions.vim autoload script
 "
@@ -19,6 +20,17 @@
 "				a:isSuccessful is 2. Used by
 "				SearchPosition#Elsewhere#Windows() for
 "				non-matching windows.
+"				Expose SearchPosition#IsValid() and
+"				SearchPosition#GetMatchesStats(). Pass in the
+"				three global configuration values instead of
+"				directly using them.
+"				Implement widening of search scope on mapping
+"				repeat at the same position, and verbose search
+"				result reporting. There's one tricky overlap in
+"				that g<A-m> on first use triggers cword search,
+"				on repeat then switches to verbose reporting. I
+"				didn't want to introduce extra sets of mappings
+"				for those.
 "   1.50.016	22-Jul-2016	Expose s:EvaluateMatchRange(), s:Report(),
 "				s:ReportMultiple()..
 "				Factor out s:IsValid().
@@ -365,7 +377,7 @@ function! s:SearchAndEvaluate( line1, line2, pattern, isLiteral )
 	throw 'SearchPosition'
     endif
 
-    let l:save_cursor = getpos('.')
+    let l:save_view = winsaveview()
     let l:cursorLine = line('.')
     let l:cursorVirtCol = virtcol('.')
     let l:isCursorOnClosedFold = (foldclosed(l:cursorLine) != -1)
@@ -478,7 +490,7 @@ function! s:SearchAndEvaluate( line1, line2, pattern, isLiteral )
 	    endif
 	endif
 
-	call setpos('.', l:save_cursor)
+	call winrestview(l:save_view)
 "****D echomsg '****' l:before '/' l:exact '/' l:after
     endif
 
@@ -509,6 +521,47 @@ function! SearchPosition#SearchPosition( line1, line2, pattern, isLiteral )
     catch /^SearchPosition/
 	return 0
     endtry
+endfunction
+let s:record = []
+let s:repeatCommand = ''
+let s:repeatStage = 0
+let s:repeatVerbose = 0
+function! SearchPosition#SearchPositionRepeat( command, isVerbose, line1, line2, pattern, isLiteral )
+    let l:newRecord = ingo#record#PositionAndLocation(0)
+    if a:isVerbose || a:command ==# 'Cword' && s:record == l:newRecord && s:repeatCommand =~# '^\%(Whole\)\?Cword$' " g<A-m> on first use triggers cword search, on repeat then switches to verbose reporting.
+	if s:record == l:newRecord && (s:repeatCommand ==# a:command || s:repeatCommand =~# '^\%(Whole\)\?Cword$')
+	    let s:repeatStage += 1  " Verbose repeats just the same.
+	else
+	    let s:record = l:newRecord
+	    let s:repeatStage = 1   " Initial mapping already starts with elsewhere search, as there is no verbose search in the current buffer.
+	endif
+	let s:repeatCommand = a:command
+	let s:repeatVerbose = 1
+	return s:SearchElsewhere(s:repeatVerbose, a:line1, a:line2, a:pattern, a:isLiteral)
+    elseif s:record == l:newRecord && (s:repeatCommand ==# a:command || a:command ==# 'WholeCword' && s:repeatCommand ==# 'Cword')
+	let s:repeatStage += 1
+	return s:SearchElsewhere(s:repeatVerbose, a:line1, a:line2, a:pattern, a:isLiteral)
+    else
+	let s:record = l:newRecord
+	let s:repeatStage = 0
+	let s:repeatCommand = a:command
+	let s:repeatVerbose = a:isVerbose
+
+	return SearchPosition#SearchPosition(a:line1, a:line2, a:pattern, a:isLiteral)
+    endif
+endfunction
+function! s:SearchElsewhere( isVerbose, line1, line2, pattern, isLiteral )
+    if s:repeatStage == 1
+	return SearchPosition#Elsewhere#Windows(a:isVerbose, 1, winnr('$'), (a:isVerbose ? -1 : winnr()), a:pattern, a:isLiteral)
+    elseif a:isVerbose
+	" Verbose cycles back to first repeat stage.
+	let s:repeatStage = 1
+	return s:SearchElsewhere(a:isVerbose, a:line1, a:line2, a:pattern, a:isLiteral)
+    else
+	" Else cycle back to normal search.
+	let s:repeatStage = 0
+	return SearchPosition#SearchPosition(a:line1, a:line2, a:pattern, a:isLiteral)
+    endif
 endfunction
 function! SearchPosition#SearchPositionMultiple( line1, line2, arguments )
     let l:patterns = []
