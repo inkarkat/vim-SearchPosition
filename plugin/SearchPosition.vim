@@ -17,6 +17,11 @@
 "				a:skipWinNr argument.
 "				BUG: {Visual}<A-m> uses selected text as
 "				pattern, not as literal text. Add escaping.
+"				Add :SearchPositionWithRepeat for use in
+"				existing mappings and the new g<A-n> mapping
+"				that supports verbose reporting. g<A-m> is now
+"				overloaded to trigger cword search on first use,
+"				on repeat then switches to verbose reporting.
 "   1.50.022	22-Jul-2016	Add :WinSearchPosition command.
 "   1.30.021	14-Apr-2015	Add :SearchPositionMultiple command.
 "   1.21.020	30-Jun-2014	Add
@@ -116,8 +121,9 @@ endif
 
 "- commands and mappings ------------------------------------------------------
 
-command! -range=% -nargs=? SearchPosition         if ! SearchPosition#SearchPosition(        <line1>, <line2>, ingo#cmdargs#pattern#ParseUnescapedWithLiteralWholeWord(<q-args>), 0) | echoerr ingo#err#Get() | endif
-command! -range=% -nargs=? SearchPositionMultiple if ! SearchPosition#SearchPositionMultiple(<line1>, <line2>, <q-args>) | echoerr ingo#err#Get() | endif
+command!       -range=% -nargs=? SearchPosition           if ! SearchPosition#SearchPosition(                          <line1>, <line2>, ingo#cmdargs#pattern#ParseUnescapedWithLiteralWholeWord(<q-args>), 0) | echoerr ingo#err#Get() | endif
+command! -bang -range=% -nargs=? SearchPositionWithRepeat if ! SearchPosition#SearchPositionRepeat('Current', <bang>0, <line1>, <line2>, ingo#cmdargs#pattern#ParseUnescapedWithLiteralWholeWord(<q-args>), 0) | echoerr ingo#err#Get() | endif
+command!       -range=% -nargs=? SearchPositionMultiple   if ! SearchPosition#SearchPositionMultiple(                  <line1>, <line2>, <q-args>) | echoerr ingo#err#Get() | endif
 
 if v:version == 704 && has('patch530') || v:version > 704
 command! -addr=windows -range=% -bang -nargs=? WinSearchPosition  if ! SearchPosition#Elsewhere#Windows(<bang>0, <line1>, <line2>, -1, ingo#cmdargs#pattern#ParseUnescapedWithLiteralWholeWord(<q-args>), 0) | echoerr ingo#err#Get() | endif
@@ -132,24 +138,32 @@ if ! hasmapto('<Plug>SearchPositionOperator', 'n')
 endif
 
 
-nnoremap <silent> <Plug>SearchPositionCurrent :SearchPosition<CR>
+nnoremap <silent> <Plug>SearchPositionCurrent :SearchPositionWithRepeat<CR>
 if ! hasmapto('<Plug>SearchPositionCurrent', 'n')
     nmap <A-n> <Plug>SearchPositionCurrent
 endif
-vnoremap <silent> <Plug>SearchPositionCurrent :SearchPosition<CR>
+vnoremap <silent> <Plug>SearchPositionCurrent :SearchPositionWithRepeat<CR>
 if ! hasmapto('<Plug>SearchPositionCurrent', 'v')
     vmap <A-n> <Plug>SearchPositionCurrent
 endif
+nnoremap <silent> <Plug>SearchPositionVerboseCurrent :SearchPositionWithRepeat!<CR>
+if ! hasmapto('<Plug>SearchPositionVerboseCurrent', 'n')
+    nmap g<A-n> <Plug>SearchPositionVerboseCurrent
+endif
+vnoremap <silent> <Plug>SearchPositionVerboseCurrent :SearchPositionWithRepeat!<CR>
+if ! hasmapto('<Plug>SearchPositionVerboseCurrent', 'v')
+    vmap g<A-n> <Plug>SearchPositionVerboseCurrent
+endif
 
-nnoremap <silent> <Plug>SearchPositionWholeCword :<C-u>if ! SearchPosition#SearchPosition((v:count ? line('.') : 0), (v:count ? line('.') + v:count - 1 : 0), SearchPosition#SetCword(1), 1)<Bar>echoerr ingo#err#Get()<Bar>endif<CR>
-nnoremap <silent> <Plug>SearchPositionCword	 :<C-u>if ! SearchPosition#SearchPosition((v:count ? line('.') : 0), (v:count ? line('.') + v:count - 1 : 0), SearchPosition#SetCword(0), 1)<Bar>echoerr ingo#err#Get()<Bar>endif<CR>
+nnoremap <silent> <Plug>SearchPositionWholeCword :<C-u>if ! SearchPosition#SearchPositionRepeat('WholeCword', 0, (v:count ? line('.') : 0), (v:count ? line('.') + v:count - 1 : 0), SearchPosition#SetCword(1), 1)<Bar>echoerr ingo#err#Get()<Bar>endif<CR>
+nnoremap <silent> <Plug>SearchPositionCword	 :<C-u>if ! SearchPosition#SearchPositionRepeat('Cword',      0, (v:count ? line('.') : 0), (v:count ? line('.') + v:count - 1 : 0), SearchPosition#SetCword(0), 1)<Bar>echoerr ingo#err#Get()<Bar>endif<CR>
 if ! hasmapto('<Plug>SearchPositionWholeCword', 'n')
     nmap <A-m> <Plug>SearchPositionWholeCword
 endif
 if ! hasmapto('<Plug>SearchPositionCword', 'n')
     nmap g<A-m> <Plug>SearchPositionCword
 endif
-vnoremap <silent> <Plug>SearchPositionCword      :<C-u>if ! SearchPosition#SearchPosition(0, 0, ingo#regexp#FromLiteralText(ingo#selection#Get(), 0, ''), 1)<Bar>echoerr ingo#err#Get()<Bar>endif<CR>
+vnoremap <silent> <Plug>SearchPositionCword      :<C-u>if ! SearchPosition#SearchPositionRepeat('Cword', 0, 0, 0, ingo#regexp#FromLiteralText(ingo#selection#Get(), 0, ''), 1)<Bar>echoerr ingo#err#Get()<Bar>endif<CR>
 if ! hasmapto('<Plug>SearchPositionCword', 'v')
     vmap <A-m> <Plug>SearchPositionCword
 endif
