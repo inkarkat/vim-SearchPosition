@@ -2,7 +2,10 @@
 "
 " DEPENDENCIES:
 "   - ingo/avoidprompt.vim autoload script
+"   - ingo/cmdargs/pattern.vim autoload script
 "   - ingo/compat.vim autoload script
+"   - ingo/err.vim autoload script
+"   - ingo/msg.vim autoload script
 "   - ingo/range.vim autoload script
 "   - ingo/record.vim autoload script
 "   - ingo/regexp.vim autoload script
@@ -14,6 +17,8 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   2.00.018	29-Jul-2016	Add elsewhere tabs search. Skip windows search
+"				when there's only one.
 "   2.00.017	28-Jul-2016	Move SearchPosition#Windows() to
 "				SearchPosition#Elsewhere#Windows().
 "				Don't highlight in s:EchoResult() when
