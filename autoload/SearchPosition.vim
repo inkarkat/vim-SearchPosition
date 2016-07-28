@@ -14,7 +14,7 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
-"   1.50.017	28-Jul-2016	Move SearchPosition#Windows() to
+"   2.00.017	28-Jul-2016	Move SearchPosition#Windows() to
 "				SearchPosition#Elsewhere#Windows().
 "				Don't highlight in s:EchoResult() when
 "				a:isSuccessful is 2. Used by
@@ -552,7 +552,17 @@ function! SearchPosition#SearchPositionRepeat( command, isVerbose, line1, line2,
 endfunction
 function! s:SearchElsewhere( isVerbose, line1, line2, pattern, isLiteral )
     if s:repeatStage == 1
-	return SearchPosition#Elsewhere#Windows(a:isVerbose, 1, winnr('$'), (a:isVerbose ? -1 : winnr()), a:pattern, a:isLiteral)
+	if winnr('$') > 1
+	    return SearchPosition#Elsewhere#Windows(a:isVerbose, 1, winnr('$'), (a:isVerbose ? -1 : winnr()), a:pattern, a:isLiteral)
+	else
+	    let s:repeatStage += 1
+	endif
+    elseif s:repeatStage == 2
+	if tabpagenr('$') > 1
+	    return SearchPosition#Elsewhere#Tabs(a:isVerbose, 1, tabpagenr('$'), (a:isVerbose ? -1 : tabpagenr()), a:pattern, a:isLiteral)
+	else
+	    let s:repeatStage += 1
+	endif
     elseif a:isVerbose
 	" Verbose cycles back to first repeat stage.
 	let s:repeatStage = 1
