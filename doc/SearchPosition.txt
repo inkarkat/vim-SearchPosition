@@ -63,11 +63,13 @@ USAGE							*SearchPosition-usage*
 			|:search-args| Useful to compare the number of
 			occurrences for multiple variants.
 
-:[range]WinSearchPosition [/][{pattern}][/]
+:[range]WinSearchPosition[!] [/][{pattern}][/]
 			Show number and distribution of the search results
-			in all buffers shown in the current tab page. If
-			[range] is given only in windows for which the window
-			number lies in the [range].
+			in all buffers shown in the current tab page. With
+			[!], shows a verbose report with match statistics
+			about every covered buffer, not just a summary.
+			If [range] is given only in windows for which the
+			window number lies in the [range].
 						     *SearchPosition-mappings*
 							     *ALT-N* *v_ALT-N*
 <Leader><A-n>{motion}	Show position for the last search pattern in the
@@ -81,7 +83,7 @@ USAGE							*SearchPosition-usage*
 			invokes this when jumping to matches via n/N, so <A-n>
 			is easy to reach. Imagine 'n' stood for "next
 			searches".
-							     *ALT-M* *v_ALT-M*
+						   *ALT-M* *g_ALT-M* *v_ALT-M*
 [count]<A-m>		Show position for the whole word under the cursor in
 			the entire buffer, or [count] following lines.
 			Only whole keywords are searched for, like with the
@@ -99,12 +101,17 @@ USAGE							*SearchPosition-usage*
 
 					      *SearchPosition-mappings-repeat*
 			Repeats of any of the mappings at the same position
-			will extend the reporting to
+			will extend the reporting to other (i.e. excluding the
+			current one)
 			- windows (|:WinSearchPosition|)
 			- tab pages (|:TabSearchPosition|)
 			- arguments (|:ArgSearchPosition|)
 			- loaded buffers (|:BufSearchPosition|)
-			skipping those sources that do not apply.
+			skipping those sources that do not exist.
+								     *g_ALT-N*
+g<A-n>			A repeat with a "g" prefix will show a verbose report
+g<A-m>			that shows match statistics about every covered
+			buffer,	not just a summary.
 
 ==============================================================================
 INSTALLATION					 *SearchPosition-installation*
@@ -268,7 +275,7 @@ First published version.
 Started development.
 
 ==============================================================================
-Copyright: (C) 2009-2015 Ingo Karkat
+Copyright: (C) 2009-2016 Ingo Karkat
 The VIM LICENSE applies to this plugin; see |copyright|.
 
 Maintainer:	Ingo Karkat <ingo@karkat.de>
