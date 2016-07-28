@@ -1,7 +1,11 @@
 " SearchPosition/Elsewhere.vim: Show number of search pattern matches in other buffers.
 "
 " DEPENDENCIES:
-"   - ingo/text.vim autoload script
+"   - ingo/actions/iterations.vim autoload script
+"   - ingo/actions/special.vim autoload script
+"   - ingo/collections.vim autoload script
+"   - ingo/err.vim autoload script
+"   - ingo/window/dimensions.vim autoload script
 "   - SearchPosition.vim autoload script
 "
 " Copyright: (C) 2015-2016 Ingo Karkat
@@ -10,6 +14,10 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   2.00.004	29-Jul-2016	Refactor SearchPosition#Elsewhere#Windows();
+"				break out the window iteration into
+"				ingo#actions#iterations#WinDo().
+"				Implement tabpage search.
 "   2.00.003	28-Jul-2016	Move SearchPosition#Windows() to
 "				SearchPosition#Elsewhere#Windows(). Add
 "				a:skipWinNr argument.
@@ -34,7 +42,6 @@
 let s:save_cpo = &cpo
 set cpo&vim
 
-" Modeled after ingo#text#frompattern#Get()
 function! SearchPosition#Elsewhere#Count( firstLnum, lastLnum, pattern, uniqueMatches )
 "******************************************************************************
 "* PURPOSE:
@@ -93,8 +100,8 @@ function! SearchPosition#Elsewhere#EvaluateOne( what, searchResult )
     \   l:isMatches,
     \   a:searchResult.firstLnum, a:searchResult.lastLnum,
     \   a:searchResult.firstMatchLnum, a:searchResult.lastMatchLnum,
-    \   printf('%ss: %s has %s match%s%s',
-    \       a:what,
+    \   printf('%s: %s has %s match%s%s',
+    \       a:searchResult.what,
     \       s:BufferIdentification(a:searchResult.bufNr),
     \       (l:isMatches ? a:searchResult.matchesCnt : 'no'),
     \       (a:searchResult.matchesCnt == 1 ? '' : 'es'),
@@ -183,16 +190,38 @@ endfunction
 
 
 
-function! SearchPosition#Elsewhere#Iterate( searchResults, pattern, uniqueMatches )
+function! SearchPosition#Elsewhere#Iterate( What, searchResults, pattern, uniqueMatches )
     let l:result = SearchPosition#Elsewhere#Count(1, line('$'), a:pattern, a:uniqueMatches)
+    let l:result.what = call(a:What, [])
     call add(a:searchResults, l:result)
 endfunction
 
-function! SearchPosition#Elsewhere#WindowsLoop( alreadySearchedBuffers, searchResults, pattern, uniqueMatches )
-    call ingo#actions#iterations#WinDo(a:alreadySearchedBuffers, function('SearchPosition#Elsewhere#Iterate'), a:searchResults, a:pattern, a:uniqueMatches)
+function! SearchPosition#Elsewhere#WindowsWhat()
+    let l:currentBufNr = bufnr('')
+    let l:windows = []
+    for l:winNr in range(1, winnr('$'))
+	if winbufnr(l:winNr) == l:currentBufNr
+	    call add(l:windows, l:winNr)
+	endif
+    endfor
+    return printf('W%-8s', join(l:windows, ','))
 endfunction
-function! SearchPosition#Elsewhere#TabsLoop( alreadySearchedTabPages, alreadySearchedBuffers, searchResults, pattern, uniqueMatches )
-    call ingo#actions#iterations#TabWinDo(a:alreadySearchedTabPages, a:alreadySearchedBuffers, function('SearchPosition#Elsewhere#Iterate'), a:searchResults, a:pattern, a:uniqueMatches)
+function! SearchPosition#Elsewhere#TabsWhat()
+    let l:currentBufNr = bufnr('')
+    let l:tabs = []
+    for l:tabNr in range(1, tabpagenr('$'))
+	if index(tabpagebuflist(l:tabNr), l:currentBufNr) != -1
+	    call add(l:tabs, l:tabNr)
+	endif
+    endfor
+    return printf('T%-8s', join(l:tabs, ','))
+endfunction
+
+function! SearchPosition#Elsewhere#WindowsLoop( alreadySearchedBuffers, What, searchResults, pattern, uniqueMatches )
+    call ingo#actions#iterations#WinDo(a:alreadySearchedBuffers, function('SearchPosition#Elsewhere#Iterate'), a:What, a:searchResults, a:pattern, a:uniqueMatches)
+endfunction
+function! SearchPosition#Elsewhere#TabsLoop( alreadySearchedTabPages, alreadySearchedBuffers, What, searchResults, pattern, uniqueMatches )
+    call ingo#actions#iterations#TabWinDo(a:alreadySearchedTabPages, a:alreadySearchedBuffers, function('SearchPosition#Elsewhere#Iterate'), a:What, a:searchResults, a:pattern, a:uniqueMatches)
 endfunction
 
 function! SearchPosition#Elsewhere#Windows( isVerbose, firstWinNr, lastWinNr, skipWinNr, pattern, isLiteral )
@@ -209,7 +238,9 @@ function! SearchPosition#Elsewhere#Windows( isVerbose, firstWinNr, lastWinNr, sk
     let l:alreadySearchedBuffers = (a:skipWinNr == -1 ? {} : {winbufnr(a:skipWinNr) : 1})
     let l:searchResults = []
 
-    call ingo#actions#special#NoAutoChdir(function('SearchPosition#Elsewhere#WindowsLoop'), l:alreadySearchedBuffers, l:searchResults, a:pattern, l:uniqueMatches)
+    call ingo#actions#special#NoAutoChdir(function('SearchPosition#Elsewhere#WindowsLoop'), l:alreadySearchedBuffers,
+    \   function('SearchPosition#Elsewhere#WindowsWhat'), l:searchResults, a:pattern, l:uniqueMatches
+    \)
 
     let l:what = (a:skipWinNr == -1 ? '' : 'other ') . 'window'
     return s:EvaluateAndReport(l:what, a:isVerbose, a:pattern, l:searchResults, l:uniqueMatches)
@@ -229,7 +260,9 @@ function! SearchPosition#Elsewhere#Tabs( isVerbose, firstTabPageNr, lastTabPageN
     let l:alreadySearchedBuffers = {}
     let l:searchResults = []
 
-    call ingo#actions#special#NoAutoChdir(function('SearchPosition#Elsewhere#TabsLoop'), l:alreadySearchedTabPages, l:alreadySearchedBuffers, l:searchResults, a:pattern, l:uniqueMatches)
+    call ingo#actions#special#NoAutoChdir(function('SearchPosition#Elsewhere#TabsLoop'), l:alreadySearchedTabPages, l:alreadySearchedBuffers,
+    \   function('SearchPosition#Elsewhere#TabsWhat'), l:searchResults, a:pattern, l:uniqueMatches
+    \)
 
     let l:what = (a:skipTabPageNr == -1 ? '' : 'other ') . 'tab'
     return s:EvaluateAndReport(l:what, a:isVerbose, a:pattern, l:searchResults, l:uniqueMatches)
