@@ -12,7 +12,8 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
-"   2.00.024	29-Jul-2016	Add :TabSearchPosition.
+"   2.00.024	29-Jul-2016	Add :TabSearchPosition, :ArgSearchPosition,
+"				:BufSearchPosition.
 "   2.00.023	28-Jul-2016	Move SearchPosition#Windows() to
 "				SearchPosition#Elsewhere#Windows(). Add
 "				a:skipWinNr argument.
@@ -127,11 +128,15 @@ command! -bang -range=% -nargs=? SearchPositionWithRepeat if ! SearchPosition#Se
 command!       -range=% -nargs=? SearchPositionMultiple   if ! SearchPosition#SearchPositionMultiple(                  <line1>, <line2>, <q-args>) | echoerr ingo#err#Get() | endif
 
 if v:version == 704 && has('patch530') || v:version > 704
-command! -addr=windows -range=% -bang -nargs=? WinSearchPosition  if ! SearchPosition#Elsewhere#Windows(<bang>0, <line1>, <line2>, -1, ingo#cmdargs#pattern#ParseUnescapedWithLiteralWholeWord(<q-args>), 0) | echoerr ingo#err#Get() | endif
-command! -addr=tabs    -range=% -bang -nargs=? TabSearchPosition  if ! SearchPosition#Elsewhere#Tabs(   <bang>0, <line1>, <line2>, -1, ingo#cmdargs#pattern#ParseUnescapedWithLiteralWholeWord(<q-args>), 0) | echoerr ingo#err#Get() | endif
+command! -addr=windows        -range=% -bang -nargs=? WinSearchPosition  if ! SearchPosition#Elsewhere#Windows(  <bang>0, <line1>, <line2>, -1, ingo#cmdargs#pattern#ParseUnescapedWithLiteralWholeWord(<q-args>), 0) | echoerr ingo#err#Get() | endif
+command! -addr=tabs           -range=% -bang -nargs=? TabSearchPosition  if ! SearchPosition#Elsewhere#Tabs(     <bang>0, <line1>, <line2>, -1, ingo#cmdargs#pattern#ParseUnescapedWithLiteralWholeWord(<q-args>), 0) | echoerr ingo#err#Get() | endif
+command! -addr=arguments      -range=% -bang -nargs=? ArgSearchPosition  if ! SearchPosition#Elsewhere#Arguments(<bang>0, <line1>, <line2>, -1, ingo#cmdargs#pattern#ParseUnescapedWithLiteralWholeWord(<q-args>), 0) | echoerr ingo#err#Get() | endif
+command! -addr=buffers        -range=% -bang -nargs=? BufSearchPosition  if ! SearchPosition#Elsewhere#Buffers(  <bang>0, <line1>, <line2>, -1, ingo#cmdargs#pattern#ParseUnescapedWithLiteralWholeWord(<q-args>), 0) | echoerr ingo#err#Get() | endif
 else
-command!                        -bang -nargs=? WinSearchPosition  if ! SearchPosition#Elsewhere#Windows(<bang>0, 1, winnr('$'),    -1, ingo#cmdargs#pattern#ParseUnescapedWithLiteralWholeWord(<q-args>), 0) | echoerr ingo#err#Get() | endif
-command!                        -bang -nargs=? TabSearchPosition  if ! SearchPosition#Elsewhere#Tabs(   <bang>0, <line1>, <line2>, -1, ingo#cmdargs#pattern#ParseUnescapedWithLiteralWholeWord(<q-args>), 0) | echoerr ingo#err#Get() | endif
+command!                               -bang -nargs=? WinSearchPosition  if ! SearchPosition#Elsewhere#Windows(  <bang>0, 1, winnr('$'),    -1, ingo#cmdargs#pattern#ParseUnescapedWithLiteralWholeWord(<q-args>), 0) | echoerr ingo#err#Get() | endif
+command!                               -bang -nargs=? TabSearchPosition  if ! SearchPosition#Elsewhere#Tabs(     <bang>0, 1, tabpagenr('$'),-1, ingo#cmdargs#pattern#ParseUnescapedWithLiteralWholeWord(<q-args>), 0) | echoerr ingo#err#Get() | endif
+command!                               -bang -nargs=? ArgSearchPosition  if ! SearchPosition#Elsewhere#Arguments(<bang>0, 1, argc(),        -1, ingo#cmdargs#pattern#ParseUnescapedWithLiteralWholeWord(<q-args>), 0) | echoerr ingo#err#Get() | endif
+command!                               -bang -nargs=? BufSearchPosition  if ! SearchPosition#Elsewhere#Buffers(  <bang>0, 1, bufnr('$'),    -1, ingo#cmdargs#pattern#ParseUnescapedWithLiteralWholeWord(<q-args>), 0) | echoerr ingo#err#Get() | endif
 endif
 
 
