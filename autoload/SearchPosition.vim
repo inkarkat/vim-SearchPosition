@@ -562,13 +562,29 @@ function! s:SearchElsewhere( isVerbose, line1, line2, pattern, isLiteral )
 	else
 	    let s:repeatStage += 1
 	endif
-    elseif s:repeatStage == 2
+    endif
+    if s:repeatStage == 2
 	if tabpagenr('$') > 1
 	    return SearchPosition#Elsewhere#Tabs(a:isVerbose, 1, tabpagenr('$'), (a:isVerbose ? -1 : tabpagenr()), a:pattern, a:isLiteral)
 	else
 	    let s:repeatStage += 1
 	endif
-    elseif a:isVerbose
+    endif
+    if s:repeatStage == 3
+	if argc() > 0
+	    return SearchPosition#Elsewhere#Arguments(a:isVerbose, 1, argc(), (a:isVerbose ? -1 : SearchPosition#Elsewhere#CurrentArgNr()), a:pattern, a:isLiteral)
+	else
+	    let s:repeatStage += 1
+	endif
+    endif
+    if s:repeatStage == 4
+	if ! ingo#buffer#IsEmptyVim()
+	    return SearchPosition#Elsewhere#Buffers(a:isVerbose, 1, bufnr('$'), (a:isVerbose ? -1 : bufnr('')), a:pattern, a:isLiteral)
+	else
+	    let s:repeatStage += 1
+	endif
+    endif
+    if a:isVerbose
 	" Verbose cycles back to first repeat stage.
 	let s:repeatStage = 1
 	return s:SearchElsewhere(a:isVerbose, a:line1, a:line2, a:pattern, a:isLiteral)
