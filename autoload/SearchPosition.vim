@@ -299,7 +299,7 @@ function! SearchPosition#EvaluateMatchRange( line1, line2, firstMatchLnum, lastM
     let l:lastLocation = s:TranslateLocation(a:lastMatchLnum, a:currentLnum, a:lastLnum, l:firstVisibleLnum, l:lastVisibleLnum)
     return printf(' within %s,%s', l:firstLocation, l:lastLocation)
 endfunction
-function! SearchPosition#GetReport( line1, line2, pattern, firstMatchLnum, lastMatchLnum, currentLnum, lastLnum, evaluation, isShowRange, isShowMatchRange, isShowPattern )
+function! SearchPosition#GetReport( line1, line2, pattern, firstMatchLnum, lastMatchLnum, currentLnum, lastLnum, what, where, evaluation, isShowRange, isShowMatchRange, isShowPattern )
     let [l:isSuccessful, l:evaluationText] = a:evaluation
 
     let l:range = ''
@@ -333,38 +333,43 @@ function! SearchPosition#GetReport( line1, line2, pattern, firstMatchLnum, lastM
 	let l:patternMessage = ingo#avoidprompt#Truncate(' for ' . l:pattern, (strlen(l:range) + strlen(l:evaluationText)))
     endif
 
-    return [l:isSuccessful, l:range, l:evaluationText, l:matchRange, l:patternMessage]
+    return [l:isSuccessful, a:what, a:where, l:range, l:evaluationText, l:matchRange, l:patternMessage]
 endfunction
-function! s:EchoResult( isSuccessful, range, evaluationText, matchRange, patternMessage )
-    echo ''
-    echon a:range
-    execute 'echohl' (a:isSuccessful ?
-    \   (a:isSuccessful == 2 ?
-    \       'None' :
-    \	    empty(g:SearchPosition_HighlightGroup) ? 'None' : g:SearchPosition_HighlightGroup
-    \   ) :
-    \	'WarningMsg'
-    \)
-    echon a:evaluationText . a:matchRange
-    if a:isSuccessful | echohl None | endif
-    echon a:patternMessage
-    if ! a:isSuccessful | echohl None | endif
+function! s:EchoResult( isHighlighted, isSuccessful, evaluationWhat, evaluationWhere, evaluationRange, evaluationText, matchRange, patternMessage )
+    if a:isHighlighted
+	echo ''
+	echon a:evaluationWhat . a:evaluationWhere
+	echon a:evaluationRange
+	execute 'echohl' (a:isSuccessful ?
+	\   (a:isSuccessful == 2 ?
+	\       'None' :
+	\	    empty(g:SearchPosition_HighlightGroup) ? 'None' : g:SearchPosition_HighlightGroup
+	\   ) :
+	\	'WarningMsg'
+	\)
+	echon a:evaluationText . a:matchRange
+	if a:isSuccessful | echohl None | endif
+	echon a:patternMessage
+	if ! a:isSuccessful | echohl None | endif
+    else
+	echomsg a:evaluationWhat . a:evaluationWhere . a:evaluationRange . a:evaluationText . a:matchRange . a:patternMessage
+    endif
 endfunction
-function! SearchPosition#Report( isSuccessful, range, evaluationText, matchRange, patternMessage )
-    echomsg a:range . a:evaluationText . a:matchRange . a:patternMessage
+function! SearchPosition#Report( isSuccessful, evaluationWhat, evaluationWhere, evaluationRange, evaluationText, matchRange, patternMessage )
+    call s:EchoResult(0, a:isSuccessful, a:evaluationWhat, a:evaluationWhere, a:evaluationRange, a:evaluationText, a:matchRange, a:patternMessage)
     redraw
 
-    call s:EchoResult(a:isSuccessful, a:range, a:evaluationText, a:matchRange, a:patternMessage)
+    call s:EchoResult(1, a:isSuccessful, a:evaluationWhat, a:evaluationWhere, a:evaluationRange, a:evaluationText, a:matchRange, a:patternMessage)
     return 1
 endfunction
 function! SearchPosition#ReportMultiple( results )
-    for [l:isSuccessful, l:range, l:evaluationText, l:matchRange, l:patternMessage] in a:results
-	echomsg l:range . l:evaluationText . l:matchRange . l:patternMessage
+    for [l:isSuccessful, l:evaluationWhat, l:evaluationWhere, l:evaluationRange, l:evaluationText, l:matchRange, l:patternMessage] in a:results
+	call s:EchoResult(0, l:isSuccessful, l:evaluationWhat, l:evaluationWhere, l:evaluationRange, l:evaluationText, l:matchRange, l:patternMessage)
 	redraw
     endfor
 
-    for [l:isSuccessful, l:range, l:evaluationText, l:matchRange, l:patternMessage] in a:results
-	call s:EchoResult(l:isSuccessful, l:range, l:evaluationText, l:matchRange, l:patternMessage)
+    for [l:isSuccessful, l:evaluationWhat, l:evaluationWhere, l:evaluationRange, l:evaluationText, l:matchRange, l:patternMessage] in a:results
+	call s:EchoResult(1, l:isSuccessful, l:evaluationWhat, l:evaluationWhere, l:evaluationRange, l:evaluationText, l:matchRange, l:patternMessage)
     endfor
     return 1
 endfunction
@@ -513,16 +518,17 @@ function! SearchPosition#SearchPosition( line1, line2, pattern, isLiteral )
 	\   l:evaluation
 	\] = s:SearchAndEvaluate(a:line1, a:line2, a:pattern, a:isLiteral)
 
-	let [l:isSuccessful, l:range, l:evaluationText, l:matchRange, l:patternMessage] = SearchPosition#GetReport(
+	let [l:isSuccessful, l:evaluationWhat, l:evaluationWhere, l:evaluationRange, l:evaluationText, l:matchRange, l:patternMessage] = SearchPosition#GetReport(
 	\   l:startLnum, l:endLnum,
 	\   a:pattern,
 	\   l:firstLnum, l:lastLnum,
 	\   line('.'), line('$'),
+	\   '', '',
 	\   l:evaluation,
 	\   g:SearchPosition_ShowRange, g:SearchPosition_ShowMatchRange, g:SearchPosition_ShowPattern
 	\)
 
-	return SearchPosition#Report(l:isSuccessful, l:range, l:evaluationText, l:matchRange, l:patternMessage)
+	return SearchPosition#Report(l:isSuccessful, l:evaluationWhat, l:evaluationWhere, l:evaluationRange, l:evaluationText, l:matchRange, l:patternMessage)
     catch /^SearchPosition/
 	return 0
     endtry
@@ -631,6 +637,7 @@ function! SearchPosition#SearchPositionMultiple( line1, line2, arguments )
 	\   l:pattern,
 	\   l:firstLnum, l:lastLnum,
 	\   line('.'), line('$'),
+	\   '', '',
 	\   l:evaluation,
 	\   g:SearchPosition_ShowRange, g:SearchPosition_ShowMatchRange, g:SearchPosition_ShowPattern
 	\))
