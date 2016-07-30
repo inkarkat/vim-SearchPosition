@@ -85,10 +85,6 @@ function! SearchPosition#Elsewhere#Count( firstLnum, lastLnum, pattern, uniqueMa
     \}
 endfunction
 
-function! s:BufferIdentification( bufNr )
-    " TODO: Include (shortened) buffer name, but truncated to 1/3 of &columns
-    return printf('#%d', a:bufNr)
-endfunction
 function! SearchPosition#Elsewhere#EvaluateOne( searchResult )
     let l:uniqueNum = len(a:searchResult.uniqueMatches)
     let l:uniqueEvaluation = (l:uniqueNum <= 1 ?
@@ -100,7 +96,7 @@ function! SearchPosition#Elsewhere#EvaluateOne( searchResult )
     \   l:isMatches,
     \   a:searchResult.firstLnum, a:searchResult.lastLnum,
     \   a:searchResult.firstMatchLnum, a:searchResult.lastMatchLnum,
-    \   s:BufferIdentification(a:searchResult.bufNr),
+    \   a:searchResult.bufNr,
     \   printf('%s match%s%s',
     \       (l:isMatches ? a:searchResult.matchesCnt : 'no'),
     \       (a:searchResult.matchesCnt == 1 ? '' : 'es'),
@@ -158,7 +154,7 @@ function! s:EvaluateAndReport( what, isVerbose, pattern, searchResults, uniqueMa
 	    \   a:pattern,
 	    \   l:firstLnum, l:lastLnum,
 	    \   l:startLnum, l:endLnum,
-	    \   a:what, l:where,
+	    \   l:searchResult.what, l:where,
 	    \   [(l:isMatches ? 1 : 2), l:evaluation],
 	    \   g:SearchPosition_ShowRange, g:SearchPosition_ShowMatchRange, l:isShowPattern
 	    \))
@@ -206,7 +202,7 @@ function! SearchPosition#Elsewhere#WindowsWhat()
 	    call add(l:windows, l:winNr)
 	endif
     endfor
-    return printf('W%-8s', join(l:windows, ','))
+    return printf('W%s', join(l:windows, ','))
 endfunction
 function! SearchPosition#Elsewhere#TabsWhat()
     let l:currentBufNr = bufnr('')
@@ -216,7 +212,7 @@ function! SearchPosition#Elsewhere#TabsWhat()
 	    call add(l:tabs, l:tabNr)
 	endif
     endfor
-    return printf('T%-8s', join(l:tabs, ','))
+    return printf('T%s', join(l:tabs, ','))
 endfunction
 function! SearchPosition#Elsewhere#CurrentArgNr()
     return (argv(argidx()) ==# bufname('') ? argidx() + 1 : -1)
@@ -229,10 +225,10 @@ function! SearchPosition#Elsewhere#ArgumentsWhat()
 	    call add(l:args, l:argNr)
 	endif
     endfor
-    return printf('A%-8s', join(l:args, ','))
+    return printf('A%s', join(l:args, ','))
 endfunction
 function! SearchPosition#Elsewhere#BuffersWhat()
-    return printf('B%-8s', bufnr(''))
+    return printf('B%s', bufnr(''))
 endfunction
 
 function! SearchPosition#Elsewhere#WindowsLoop( alreadySearchedBuffers, What, searchResults, pattern, uniqueMatches )
