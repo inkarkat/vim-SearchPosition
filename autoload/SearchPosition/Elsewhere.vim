@@ -89,7 +89,7 @@ function! s:BufferIdentification( bufNr )
     " TODO: Include (shortened) buffer name, but truncated to 1/3 of &columns
     return printf('#%d', a:bufNr)
 endfunction
-function! SearchPosition#Elsewhere#EvaluateOne( what, searchResult )
+function! SearchPosition#Elsewhere#EvaluateOne( searchResult )
     let l:uniqueNum = len(a:searchResult.uniqueMatches)
     let l:uniqueEvaluation = (l:uniqueNum <= 1 ?
     \   '' :
@@ -100,23 +100,22 @@ function! SearchPosition#Elsewhere#EvaluateOne( what, searchResult )
     \   l:isMatches,
     \   a:searchResult.firstLnum, a:searchResult.lastLnum,
     \   a:searchResult.firstMatchLnum, a:searchResult.lastMatchLnum,
-    \   printf('%s: %s has %s match%s%s',
-    \       a:searchResult.what,
-    \       s:BufferIdentification(a:searchResult.bufNr),
+    \   s:BufferIdentification(a:searchResult.bufNr),
+    \   printf('%s match%s%s',
     \       (l:isMatches ? a:searchResult.matchesCnt : 'no'),
     \       (a:searchResult.matchesCnt == 1 ? '' : 'es'),
     \       l:uniqueEvaluation
     \   )
     \]
 endfunction
-function! SearchPosition#Elsewhere#Evaluate( what, searchResults, uniqueGlobalMatches )
+function! SearchPosition#Elsewhere#Evaluate( searchResults, uniqueGlobalMatches )
     let l:positiveResults = filter(copy(a:searchResults), 'v:val.matchesCnt > 0')
 
     let l:positiveResultNum = len(l:positiveResults)
     if l:positiveResultNum == 0
-	return [0, 0, 0, 0, 0, printf('No matches in %ss', a:what)]
+	return [0, 0, 0, 0, 0, '', 'No matches']
     elseif l:positiveResultNum == 1
-	return SearchPosition#Elsewhere#EvaluateOne(a:what, l:positiveResults[0])
+	return SearchPosition#Elsewhere#EvaluateOne(l:positiveResults[0])
     else
 	let l:uniqueNum = len(a:uniqueGlobalMatches)
 	let l:uniqueEvaluation = (l:uniqueNum <= 1 ?
@@ -131,14 +130,13 @@ function! SearchPosition#Elsewhere#Evaluate( what, searchResults, uniqueGlobalMa
 	\)
 
 	let l:resultNum = len(a:searchResults)
-	let l:evaluation = printf('%ss: %s buffers have %d match%s%s',
-	\   a:what,
+	let l:evaluation = printf('%s buffers have %d match%s%s',
 	\   (l:positiveResultNum == l:resultNum ? 'All' : printf('%d of %d', l:positiveResultNum, l:resultNum)),
 	\   l:matchesCnt,
 	\   (l:matchesCnt == 1 ? '' : 'es'),
 	\   l:uniqueEvaluation
 	\)
-	return [1, 0, 0, 0, 0, l:evaluation]
+	return [1, 0, 0, 0, 0, '', l:evaluation]
     endif
 endfunction
 
@@ -151,14 +149,16 @@ function! s:EvaluateAndReport( what, isVerbose, pattern, searchResults, uniqueMa
 	    \   l:isMatches,
 	    \   l:startLnum, l:endLnum,
 	    \   l:firstLnum, l:lastLnum,
+	    \   l:where,
 	    \   l:evaluation
-	    \] = SearchPosition#Elsewhere#EvaluateOne(a:what, l:searchResult)
+	    \] = SearchPosition#Elsewhere#EvaluateOne(l:searchResult)
 
 	    call add(l:results, SearchPosition#GetReport(
 	    \   l:startLnum, l:endLnum,
 	    \   a:pattern,
 	    \   l:firstLnum, l:lastLnum,
 	    \   l:startLnum, l:endLnum,
+	    \   a:what, l:where,
 	    \   [(l:isMatches ? 1 : 2), l:evaluation],
 	    \   g:SearchPosition_ShowRange, g:SearchPosition_ShowMatchRange, l:isShowPattern
 	    \))
@@ -171,19 +171,21 @@ function! s:EvaluateAndReport( what, isVerbose, pattern, searchResults, uniqueMa
 	\   l:isMatches,
 	\   l:startLnum, l:endLnum,
 	\   l:firstLnum, l:lastLnum,
+	\   l:where,
 	\   l:evaluation
-	\] = SearchPosition#Elsewhere#Evaluate(a:what, a:searchResults, a:uniqueMatches)
+	\] = SearchPosition#Elsewhere#Evaluate(a:searchResults, a:uniqueMatches)
 
-	let [l:isSuccessful, l:range, l:evaluationText, l:matchRange, l:patternMessage] = SearchPosition#GetReport(
+	let [l:isSuccessful, l:what, l:where, l:range, l:evaluationText, l:matchRange, l:patternMessage] = SearchPosition#GetReport(
 	\   l:startLnum, l:endLnum,
 	\   a:pattern,
 	\   l:firstLnum, l:lastLnum,
 	\   l:startLnum, l:endLnum,
+	\   a:what, l:where,
 	\   [1, l:evaluation],
 	\   g:SearchPosition_ShowRange, g:SearchPosition_ShowMatchRange, g:SearchPosition_ShowPattern
 	\)
 
-	return SearchPosition#Report(l:isSuccessful, l:range, l:evaluationText, l:matchRange, l:patternMessage)
+	return SearchPosition#Report(l:isSuccessful, l:what, l:where, l:range, l:evaluationText, l:matchRange, l:patternMessage)
     endif
 endfunction
 
