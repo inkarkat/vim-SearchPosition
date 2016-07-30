@@ -216,12 +216,34 @@ function! SearchPosition#Elsewhere#TabsWhat()
     endfor
     return printf('T%-8s', join(l:tabs, ','))
 endfunction
+function! SearchPosition#Elsewhere#CurrentArgNr()
+    return (argv(argidx()) ==# bufname('') ? argidx() + 1 : -1)
+endfunction
+function! SearchPosition#Elsewhere#ArgumentsWhat()
+    let l:currentBufname = bufname('')
+    let l:args = []
+    for l:argNr in range(1, argc())
+	if argv(l:argNr - 1) ==# l:currentBufname
+	    call add(l:args, l:argNr)
+	endif
+    endfor
+    return printf('A%-8s', join(l:args, ','))
+endfunction
+function! SearchPosition#Elsewhere#BuffersWhat()
+    return printf('B%-8s', bufnr(''))
+endfunction
 
 function! SearchPosition#Elsewhere#WindowsLoop( alreadySearchedBuffers, What, searchResults, pattern, uniqueMatches )
     call ingo#actions#iterations#WinDo(a:alreadySearchedBuffers, function('SearchPosition#Elsewhere#Iterate'), a:What, a:searchResults, a:pattern, a:uniqueMatches)
 endfunction
 function! SearchPosition#Elsewhere#TabsLoop( alreadySearchedTabPages, alreadySearchedBuffers, What, searchResults, pattern, uniqueMatches )
     call ingo#actions#iterations#TabWinDo(a:alreadySearchedTabPages, a:alreadySearchedBuffers, function('SearchPosition#Elsewhere#Iterate'), a:What, a:searchResults, a:pattern, a:uniqueMatches)
+endfunction
+function! SearchPosition#Elsewhere#ArgumentsLoop( alreadySearchedBuffers, What, searchResults, pattern, uniqueMatches )
+    call ingo#actions#iterations#ArgDo(a:alreadySearchedBuffers, function('SearchPosition#Elsewhere#Iterate'), a:What, a:searchResults, a:pattern, a:uniqueMatches)
+endfunction
+function! SearchPosition#Elsewhere#BuffersLoop( alreadySearchedBuffers, What, searchResults, pattern, uniqueMatches )
+    call ingo#actions#iterations#BufDo(a:alreadySearchedBuffers, function('SearchPosition#Elsewhere#Iterate'), a:What, a:searchResults, a:pattern, a:uniqueMatches)
 endfunction
 
 function! SearchPosition#Elsewhere#Windows( isVerbose, firstWinNr, lastWinNr, skipWinNr, pattern, isLiteral )
@@ -265,6 +287,48 @@ function! SearchPosition#Elsewhere#Tabs( isVerbose, firstTabPageNr, lastTabPageN
     \)
 
     let l:what = (a:skipTabPageNr == -1 ? '' : 'other ') . 'tab'
+    return s:EvaluateAndReport(l:what, a:isVerbose, a:pattern, l:searchResults, l:uniqueMatches)
+endfunction
+function! SearchPosition#Elsewhere#Arguments( isVerbose, firstArgNr, lastArgNr, skipArgNr, pattern, isLiteral )
+    if ! SearchPosition#IsValid(a:pattern, a:isLiteral)
+	return 0
+    elseif argc() == 1 && a:skipArgNr == 1
+	" There's only one argument, and it should be excluded.
+	call ingo#err#Set('No other arguments')
+	return 0
+    endif
+
+
+    let l:uniqueMatches = {}
+    let l:alreadySearchedBuffers = (a:skipArgNr == -1 ? {} : {bufnr(ingo#escape#file#bufnameescape(argv(a:skipArgNr - 1))) : 1})
+    let l:searchResults = []
+
+    call ingo#actions#special#NoAutoChdir(function('SearchPosition#Elsewhere#ArgumentsLoop'), l:alreadySearchedBuffers,
+    \   function('SearchPosition#Elsewhere#ArgumentsWhat'), l:searchResults, a:pattern, l:uniqueMatches
+    \)
+
+    let l:what = (a:skipArgNr == -1 ? '' : 'other ') . 'argument'
+    return s:EvaluateAndReport(l:what, a:isVerbose, a:pattern, l:searchResults, l:uniqueMatches)
+endfunction
+function! SearchPosition#Elsewhere#Buffers( isVerbose, firstBufNr, lastBufNr, skipBufNr, pattern, isLiteral )
+    if ! SearchPosition#IsValid(a:pattern, a:isLiteral)
+	return 0
+    elseif ! ingo#buffer#ExistOtherBuffers(bufnr(''))
+	" There's only one buffer, and it should be excluded.
+	call ingo#err#Set('No other buffers')
+	return 0
+    endif
+
+
+    let l:uniqueMatches = {}
+    let l:alreadySearchedBuffers = (a:skipBufNr == -1 ? {} : {bufnr('') : 1})
+    let l:searchResults = []
+
+    call ingo#actions#special#NoAutoChdir(function('SearchPosition#Elsewhere#BuffersLoop'), l:alreadySearchedBuffers,
+    \   function('SearchPosition#Elsewhere#BuffersWhat'), l:searchResults, a:pattern, l:uniqueMatches
+    \)
+
+    let l:what = (a:skipBufNr == -1 ? '' : 'other ') . 'buffer'
     return s:EvaluateAndReport(l:what, a:isVerbose, a:pattern, l:searchResults, l:uniqueMatches)
 endfunction
 
