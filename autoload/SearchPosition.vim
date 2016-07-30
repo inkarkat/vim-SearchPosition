@@ -323,22 +323,27 @@ function! SearchPosition#GetReport( line1, line2, pattern, firstMatchLnum, lastM
 	endif
     endif
 
-    let l:patternMessage = ''
+    let l:pattern = ''
     if a:isShowPattern
 	let l:pattern = ingo#avoidprompt#TranslateLineBreaks('/' . (empty(a:pattern) ? @/ : escape(a:pattern, '/')) . '/')
+    endif
+
+    return [l:isSuccessful, a:what, a:where, l:range, l:evaluationText, l:matchRange, l:pattern]
+endfunction
+function! s:EchoResult( isHighlighted, isSuccessful, evaluationWhat, evaluationWhere, evaluationRange, evaluationText, matchRange, patternMessage )
+    let l:bufferName = ''
+    if ! empty(a:evaluationWhere)
+	let l:bufferFilespec = fnamemodify(bufname(a:evaluationWhere), ':~:.')
+	let l:bufferName = ' ' . ingo#avoidprompt#TruncateTo(l:bufferFilespec, ingo#avoidprompt#MaxLength() / 3) . ' '
+    endif
+
 	" Assumption: The evaluation message only contains printable ASCII
 	" characters; we can thus simple use strlen() to determine the number of
 	" occupied virtual columns. Otherwise, ingo#compat#strdisplaywidth()
 	" could be used.
-	let l:patternMessage = ingo#avoidprompt#Truncate(' for ' . l:pattern, (strlen(l:range) + strlen(l:evaluationText)))
-    endif
-
-    return [l:isSuccessful, a:what, a:where, l:range, l:evaluationText, l:matchRange, l:patternMessage]
-endfunction
-function! s:EchoResult( isHighlighted, isSuccessful, evaluationWhat, evaluationWhere, evaluationRange, evaluationText, matchRange, patternMessage )
     if a:isHighlighted
 	echo ''
-	echon a:evaluationWhat . a:evaluationWhere
+	echon a:evaluationWhat . l:bufferName
 	echon a:evaluationRange
 	execute 'echohl' (a:isSuccessful ?
 	\   (a:isSuccessful == 2 ?
@@ -352,7 +357,7 @@ function! s:EchoResult( isHighlighted, isSuccessful, evaluationWhat, evaluationW
 	echon a:patternMessage
 	if ! a:isSuccessful | echohl None | endif
     else
-	echomsg a:evaluationWhat . a:evaluationWhere . a:evaluationRange . a:evaluationText . a:matchRange . a:patternMessage
+	echomsg a:evaluationWhat . l:bufferName . a:evaluationRange . a:evaluationText . a:matchRange . a:patternMessage
     endif
 endfunction
 function! SearchPosition#Report( isSuccessful, evaluationWhat, evaluationWhere, evaluationRange, evaluationText, matchRange, patternMessage )
