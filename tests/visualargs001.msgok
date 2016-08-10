@@ -2,4 +2,4 @@ On sole match in this line, 1 in following lines within 13,.+5 for /tool/
 
 On sole match in this line, 1 in previous lines within .-1,21 for /one line/
 
-2 matches before this line within 20,21 for /\(['"]\)one\s\+line\1/
+On sole match in this line, 2 in previous lines within 20,89 for /one line/
