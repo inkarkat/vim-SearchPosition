@@ -1,6 +1,6 @@
 1 match after cursor in this line for /\<notyetimplemented\>/
 
-2 matches after this line within 13,14 for /\cis not/
+2 matches after this line (2 different) within 13,14 for /\cis not/
 
 3 matches after this line within 13,18 for /not yet/
 
