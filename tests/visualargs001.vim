@@ -1,4 +1,4 @@
-" Test argument matches in visual mode. 
+" Test argument matches in visual mode.
 
 execute "normal! /tool/\<CR>"
 execute "normal ve\<A-m>"
@@ -8,4 +8,3 @@ call setline('$', '\([''"]\)one\s\+line\1')
 execute "normal G0v$\<A-m>"
 
 call vimtest#Quit()
-
