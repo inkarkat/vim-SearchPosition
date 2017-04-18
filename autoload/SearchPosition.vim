@@ -11,12 +11,16 @@
 "   - ingo/regexp.vim autoload script
 "   - ingo/window/dimensions.vim autoload script
 "
-" Copyright: (C) 2008-2016 Ingo Karkat
+" Copyright: (C) 2008-2017 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   2.00.020	19-Apr-2017	Handle empty matches (e.g. :SearchPosition /^/)
+"				also in older Vim versions (that don't allow
+"				empty Dictionary keys) by wrapping in
+"				ingo#compat#DictKey().
 "   2.00.019	01-Aug-2016	Re-implement rendering of results in
 "				s:RenderReport().
 "   2.00.018	29-Jul-2016	Add elsewhere tabs search. Skip windows search
@@ -153,6 +157,7 @@ function! SearchPosition#IsValid( pattern, isLiteral )
 	return 1
     endif
 endfunction
+silent! call ingo#compat#DoesNotexist() " Need to preload, as autoloading within s:Record() fails with "E48: Not allowed in sandbox: function! ingo#compat#shiftwidth()", because the function is invoked as part of :sub-replace-expression.
 function! s:Record( record, uniqueMatches )
     let l:lnum = line('.')
     " Assumption: We're invoked with ascending line numbers.
@@ -163,7 +168,7 @@ function! s:Record( record, uniqueMatches )
 	let a:record[1] = l:lnum
     endif
 
-    let l:match = submatch(0)
+    let l:match = ingo#compat#DictKey(submatch(0))
     let a:uniqueMatches[l:match] = get(a:uniqueMatches, l:match, 0) + 1
 endfunction
 function! SearchPosition#GetMatchesStats( range, pattern, uniqueMatches )
