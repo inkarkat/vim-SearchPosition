@@ -17,6 +17,8 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   2.00.019	01-Aug-2016	Re-implement rendering of results in
+"				s:RenderReport().
 "   2.00.018	29-Jul-2016	Add elsewhere tabs search. Skip windows search
 "				when there's only one.
 "   2.00.017	28-Jul-2016	Move SearchPosition#Windows() to
@@ -325,18 +327,12 @@ function! SearchPosition#GetReport( line1, line2, pattern, firstMatchLnum, lastM
 
     let l:pattern = ''
     if a:isShowPattern
-	let l:pattern = ingo#avoidprompt#TranslateLineBreaks('/' . (empty(a:pattern) ? @/ : escape(a:pattern, '/')) . '/')
+	let l:pattern = ' for ' . ingo#avoidprompt#TranslateLineBreaks('/' . (empty(a:pattern) ? @/ : escape(a:pattern, '/')) . '/')
     endif
 
     return [l:isSuccessful, a:what, a:where, l:range, l:evaluationText, l:matchRange, l:pattern]
 endfunction
-function! s:EchoResult( isHighlighted, isSuccessful, evaluationWhat, evaluationWhere, evaluationRange, evaluationText, matchRange, patternMessage )
-    let l:bufferName = ''
-    if ! empty(a:evaluationWhere)
-	let l:bufferFilespec = fnamemodify(bufname(a:evaluationWhere), ':~:.')
-	let l:bufferName = ' ' . ingo#avoidprompt#TruncateTo(l:bufferFilespec, ingo#avoidprompt#MaxLength() / 3) . ' '
-    endif
-
+function! s:Format( isHighlighted, isSuccessful, evaluationWhat, evaluationWhere, evaluationRange, evaluationText, matchRange, patternMessage )
 	" Assumption: The evaluation message only contains printable ASCII
 	" characters; we can thus simple use strlen() to determine the number of
 	" occupied virtual columns. Otherwise, ingo#compat#strdisplaywidth()
@@ -360,22 +356,76 @@ function! s:EchoResult( isHighlighted, isSuccessful, evaluationWhat, evaluationW
 	echomsg a:evaluationWhat . l:bufferName . a:evaluationRange . a:evaluationText . a:matchRange . a:patternMessage
     endif
 endfunction
-function! SearchPosition#Report( isSuccessful, evaluationWhat, evaluationWhere, evaluationRange, evaluationText, matchRange, patternMessage )
-    call s:EchoResult(0, a:isSuccessful, a:evaluationWhat, a:evaluationWhere, a:evaluationRange, a:evaluationText, a:matchRange, a:patternMessage)
-    redraw
+function! s:ExpandWhere( result, maxLength )
+    if ! empty(a:result[2])
+	let l:bufferFilespec = fnamemodify(bufname(a:result[2]), ':~:.')
+	let a:result[2] = ingo#avoidprompt#TruncateTo(l:bufferFilespec, a:maxLength - 1)
+    endif
+    return a:result
+endfunction
+function! s:FormatItem( itemIdx, result, length )
+    let a:result[a:itemIdx] = printf('%-' . a:length . 's', a:result[a:itemIdx])
+    return a:result
+endfunction
+function! s:FormatResults( results )
+    call map(a:results, 's:ExpandWhere(v:val, ' . ingo#avoidprompt#MaxLength() / 3 . ')')
+    let l:whereLength = max(map(copy(a:results), 'strlen(v:val[2])'))
+    if l:whereLength > 0
+	call map(a:results, 's:FormatItem(2, v:val, l:whereLength + 1)')
+    endif
 
-    call s:EchoResult(1, a:isSuccessful, a:evaluationWhat, a:evaluationWhere, a:evaluationRange, a:evaluationText, a:matchRange, a:patternMessage)
+    let l:whatLength = max(map(copy(a:results), 'strlen(v:val[1])'))
+    if l:whatLength > 0
+	call map(a:results, 's:FormatItem(1, v:val, l:whatLength + 1)')
+    endif
+
+    return a:results
+endfunction
+function! s:EchoReport( report )
+    echomsg join(a:report[1:], '')
+endfunction
+function! s:GetHl( setting )
+    return (empty(a:setting) ? 'None' : a:setting)
+endfunction
+function! s:RenderReport( report )
+    let [l:isSuccessful, l:evaluationWhat, l:evaluationWhere, l:evaluationRange, l:evaluationText, l:matchRange, l:patternMessage] = a:report
+
+    echo ''
+
+    call ingo#msg#HighlightN(l:evaluationWhat, s:GetHl(g:SearchPosition_HighlightGroupWhat))
+
+    call ingo#msg#HighlightN(l:evaluationWhere, s:GetHl(g:SearchPosition_HighlightGroupWhere))
+
+    call ingo#msg#HighlightN(l:evaluationRange)
+
+    call ingo#msg#HighlightN(l:evaluationText . l:matchRange,
+    \   l:isSuccessful ?
+    \       (l:isSuccessful == 2 ?
+    \           'None' :
+    \           s:GetHl(g:SearchPosition_HighlightGroup)
+    \       ) :
+    \       'WarningMsg'
+    \   )
+
+    call ingo#msg#HighlightN(l:patternMessage)
+endfunction
+function! SearchPosition#Report( isSuccessful, evaluationWhat, evaluationWhere, evaluationRange, evaluationText, matchRange, patternMessage )
+    let l:formattedReports = s:FormatResults([[a:isSuccessful, a:evaluationWhat, a:evaluationWhere, a:evaluationRange, a:evaluationText, a:matchRange, a:patternMessage]])
+    call s:EchoReport(l:formattedReports[0])
+    redraw
+    call s:RenderReport(l:formattedReports[0])
     return 1
 endfunction
 function! SearchPosition#ReportMultiple( results )
-    for [l:isSuccessful, l:evaluationWhat, l:evaluationWhere, l:evaluationRange, l:evaluationText, l:matchRange, l:patternMessage] in a:results
-	call s:EchoResult(0, l:isSuccessful, l:evaluationWhat, l:evaluationWhere, l:evaluationRange, l:evaluationText, l:matchRange, l:patternMessage)
+    let l:formattedReports = s:FormatResults(a:results)
+    for l:formattedReport in l:formattedReports
+	call s:EchoReport(l:formattedReport)
 	redraw
     endfor
-
-    for [l:isSuccessful, l:evaluationWhat, l:evaluationWhere, l:evaluationRange, l:evaluationText, l:matchRange, l:patternMessage] in a:results
-	call s:EchoResult(1, l:isSuccessful, l:evaluationWhat, l:evaluationWhere, l:evaluationRange, l:evaluationText, l:matchRange, l:patternMessage)
+    for l:formattedReport in l:formattedReports
+	call s:RenderReport(l:formattedReport)
     endfor
+
     return 1
 endfunction
 function! s:SearchAndEvaluate( line1, line2, pattern, isLiteral )
