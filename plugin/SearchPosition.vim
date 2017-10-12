@@ -12,6 +12,9 @@
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   2.00.025	31-Jul-2016	Add g:SearchPosition_HighlightGroupWhat,
+"				g:SearchPosition_HighlightGroupWhere additional
+"				rendering configuration.
 "   2.00.024	29-Jul-2016	Add :TabSearchPosition, :ArgSearchPosition,
 "				:BufSearchPosition.
 "   2.00.023	28-Jul-2016	Move SearchPosition#Windows() to
@@ -104,6 +107,13 @@ let g:loaded_SearchPosition = 1
 if ! exists('g:SearchPosition_HighlightGroup')
     let g:SearchPosition_HighlightGroup = 'ModeMsg'
 endif
+if ! exists('g:SearchPosition_HighlightGroupWhat')
+    let g:SearchPosition_HighlightGroupWhat = 'Title'
+endif
+if ! exists('g:SearchPosition_HighlightGroupWhere')
+    let g:SearchPosition_HighlightGroupWhere = 'Directory'
+endif
+
 if ! exists('g:SearchPosition_ShowRange')
     let g:SearchPosition_ShowRange = 1
 endif
@@ -113,6 +123,7 @@ endif
 if ! exists('g:SearchPosition_ShowMatchRange')
     let g:SearchPosition_ShowMatchRange = 1
 endif
+
 if ! exists('g:SearchPosition_MatchRangeShowRelativeThreshold')
     let g:SearchPosition_MatchRangeShowRelativeThreshold = 'visible'
 endif
