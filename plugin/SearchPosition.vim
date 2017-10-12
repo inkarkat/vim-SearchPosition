@@ -6,12 +6,14 @@
 "   - ingo/cmdargs/pattern.vim autoload script
 "   - ingo/selection.vim autoload script
 "
-" Copyright: (C) 2008-2016 Ingo Karkat
+" Copyright: (C) 2008-2017 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
 "
 " REVISION	DATE		REMARKS
+"   2.00.026	13-Oct-2017	FIX: Don't define g<A-n> for select mode, as it
+"				starts with a printable character.
 "   2.00.025	31-Jul-2016	Add g:SearchPosition_HighlightGroupWhat,
 "				g:SearchPosition_HighlightGroupWhere additional
 "				rendering configuration.
@@ -173,7 +175,7 @@ if ! hasmapto('<Plug>SearchPositionVerboseCurrent', 'n')
 endif
 vnoremap <silent> <Plug>SearchPositionVerboseCurrent :SearchPositionWithRepeat!<CR>
 if ! hasmapto('<Plug>SearchPositionVerboseCurrent', 'v')
-    vmap g<A-n> <Plug>SearchPositionVerboseCurrent
+    xmap g<A-n> <Plug>SearchPositionVerboseCurrent
 endif
 
 nnoremap <silent> <Plug>SearchPositionWholeCword :<C-u>if ! SearchPosition#SearchPositionRepeat('WholeCword', 0, (v:count ? line('.') : 0), (v:count ? line('.') + v:count - 1 : 0), SearchPosition#SetCword(1), 1)<Bar>echoerr ingo#err#Get()<Bar>endif<CR>
