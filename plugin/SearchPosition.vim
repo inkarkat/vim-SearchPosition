@@ -6,7 +6,7 @@
 "   - ingo/cmdargs/pattern.vim autoload script
 "   - ingo/selection.vim autoload script
 "
-" Copyright: (C) 2008-2017 Ingo Karkat
+" Copyright: (C) 2008-2019 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
@@ -180,11 +180,19 @@ endif
 
 nnoremap <silent> <Plug>SearchPositionWholeCword :<C-u>if ! SearchPosition#SearchPositionRepeat('WholeCword', 0, (v:count ? line('.') : 0), (v:count ? line('.') + v:count - 1 : 0), SearchPosition#SetCword(1), 1)<Bar>echoerr ingo#err#Get()<Bar>endif<CR>
 nnoremap <silent> <Plug>SearchPositionCword	 :<C-u>if ! SearchPosition#SearchPositionRepeat('Cword',      0, (v:count ? line('.') : 0), (v:count ? line('.') + v:count - 1 : 0), SearchPosition#SetCword(0), 1)<Bar>echoerr ingo#err#Get()<Bar>endif<CR>
+nnoremap <silent> <Plug>SearchPositionWholeCWORD :<C-u>if ! SearchPosition#SearchPositionRepeat('WholeCWORD', 0, (v:count ? line('.') : 0), (v:count ? line('.') + v:count - 1 : 0), SearchPosition#SetCWORD(1), 1)<Bar>echoerr ingo#err#Get()<Bar>endif<CR>
+nnoremap <silent> <Plug>SearchPositionCWORD	 :<C-u>if ! SearchPosition#SearchPositionRepeat('CWORD',      0, (v:count ? line('.') : 0), (v:count ? line('.') + v:count - 1 : 0), SearchPosition#SetCWORD(0), 1)<Bar>echoerr ingo#err#Get()<Bar>endif<CR>
 if ! hasmapto('<Plug>SearchPositionWholeCword', 'n')
     nmap <A-m> <Plug>SearchPositionWholeCword
 endif
 if ! hasmapto('<Plug>SearchPositionCword', 'n')
     nmap g<A-m> <Plug>SearchPositionCword
+endif
+if ! hasmapto('<Plug>SearchPositionWholeCWORD', 'n')
+    nmap ,<A-m> <Plug>SearchPositionWholeCWORD
+endif
+if ! hasmapto('<Plug>SearchPositionCWORD', 'n')
+    nmap g,<A-m> <Plug>SearchPositionCWORD
 endif
 vnoremap <silent> <Plug>SearchPositionCword      :<C-u>if ! SearchPosition#SearchPositionRepeat('Cword', 0, 0, 0, ingo#regexp#FromLiteralText(ingo#selection#Get(), 0, ''), 1)<Bar>echoerr ingo#err#Get()<Bar>endif<CR>
 if ! hasmapto('<Plug>SearchPositionCword', 'v')

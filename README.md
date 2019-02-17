@@ -117,6 +117,18 @@ USAGE
                             These mappings reuse the last used <cword> when issued
                             on a blank line.
 
+    [count],<A-m>           Show position for the whole (i.e. delimited by
+                            whitespace) WORD under the cursor in the entire
+                            buffer, or [count] following lines.
+    [count]g,<A-m>          Show position for the WORD under the cursor in the
+                            entire buffer, or [count] following lines.
+                            Also finds contained matches, like gstar.
+                            When repeated at the same position, switches to
+                            verbose reporting, like g_ALT-N.
+
+                            These mappings reuse the last used <cWORD> when issued
+                            on a blank line.
+
                             Repeats of any of the mappings at the same position
                             will extend the reporting to other (i.e. excluding the
                             current one)
@@ -128,11 +140,11 @@ USAGE
 
     g<A-n>                  A repeat with a "g" prefix at the same position will
     g<A-m>                  show a verbose report that shows match statistics
-                            about every covered buffer, not just a summary.
+    g,<A-m>                 about every covered buffer, not just a summary.
                             g<A-n> can also be used anywhere to start a verbose
-                            report for all windows; g<A-m> cannot, because it is
-                            overloaded with showing the position of the word under
-                            the cursor.
+                            report for all windows; g<A-m> / g,<A-m> cannot,
+                            because they are overloaded with showing the position
+                            of the word / WORD under the cursor.
 
 INSTALLATION
 ------------------------------------------------------------------------------
@@ -156,7 +168,7 @@ To uninstall, use the :RmVimball command.
 ### DEPENDENCIES
 
 - Requires Vim 7.0 or higher.
-- Requires the ingo-library.vim plugin ([vimscript #4433](http://www.vim.org/scripts/script.php?script_id=4433)), version 1.025 or
+- Requires the ingo-library.vim plugin ([vimscript #4433](http://www.vim.org/scripts/script.php?script_id=4433)), version 1.036 or
   higher.
 
 CONFIGURATION
@@ -198,6 +210,8 @@ your vimrc):
     nmap <Leader>m <Plug>SearchPositionWholeCword
     vmap <Leader>m <Plug>SearchPositionCword
     nmap <Leader>M <Plug>SearchPositionCword
+    nmap <Leader>w <Plug>SearchPositionWholeCWORD
+    nmap <Leader>W <Plug>SearchPositionCWORD
 
 LIMITATIONS
 ------------------------------------------------------------------------------
@@ -221,8 +235,10 @@ HISTORY
   :BufSearchPosition commands.
 - BUG: {Visual}<A-m> uses selected text as pattern, not as literal text. Add
   escaping.
+- ENH: Add [g],<A-m> variants of [g]<A-m> that use (whole) WORD instead of
+  word.
 
-__You need to update to ingo-library ([vimscript #4433](http://www.vim.org/scripts/script.php?script_id=4433)) version 1.025!__
+__You need to update to ingo-library ([vimscript #4433](http://www.vim.org/scripts/script.php?script_id=4433)) version 1.036!__
 
 ##### 1.30    23-Apr-2015
 - BUG: Also need to account for cursor within closed fold for the start line
@@ -319,7 +335,7 @@ affected the <Leader><A-n>{motion} command.
 - Started development.
 
 ------------------------------------------------------------------------------
-Copyright: (C) 2009-2018 Ingo Karkat -
+Copyright: (C) 2009-2019 Ingo Karkat -
 The [VIM LICENSE](http://vimdoc.sourceforge.net/htmldoc/uganda.html#license) applies to this plugin.
 
 Maintainer:     Ingo Karkat <ingo@karkat.de>

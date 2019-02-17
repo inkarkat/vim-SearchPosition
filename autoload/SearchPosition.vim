@@ -11,7 +11,7 @@
 "   - ingo/regexp.vim autoload script
 "   - ingo/window/dimensions.vim autoload script
 "
-" Copyright: (C) 2008-2017 Ingo Karkat
+" Copyright: (C) 2008-2019 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
@@ -599,8 +599,8 @@ let s:repeatStage = 0
 let s:repeatVerbose = 0
 function! SearchPosition#SearchPositionRepeat( command, isVerbose, line1, line2, pattern, isLiteral )
     let l:newRecord = ingo#record#PositionAndLocation(0)
-    if a:isVerbose || a:command ==# 'Cword' && s:record == l:newRecord && s:repeatCommand =~# '^\%(Whole\)\?Cword$' " g<A-m> on first use triggers cword search, on repeat then switches to verbose reporting.
-	if s:record == l:newRecord && (s:repeatCommand ==# a:command || s:repeatCommand =~# '^\%(Whole\)\?Cword$')
+    if a:isVerbose || a:command ==? 'cword' && s:record == l:newRecord && s:repeatCommand =~? '^\%(Whole\)\?cword$' " g<A-m> / g<A-w> on first use trigger cword/cWORD search, on repeat then switch to verbose reporting.
+	if s:record == l:newRecord && (s:repeatCommand ==# a:command || s:repeatCommand =~? '^\%(Whole\)\?cword$')
 	    let s:repeatStage += 1  " Verbose repeats just the same.
 	else
 	    let s:record = l:newRecord
@@ -609,7 +609,7 @@ function! SearchPosition#SearchPositionRepeat( command, isVerbose, line1, line2,
 	let s:repeatCommand = a:command
 	let s:repeatVerbose = 1
 	return s:SearchElsewhere(s:repeatVerbose, a:line1, a:line2, a:pattern, a:isLiteral)
-    elseif s:record == l:newRecord && (s:repeatCommand ==# a:command || a:command ==# 'WholeCword' && s:repeatCommand ==# 'Cword')
+    elseif s:record == l:newRecord && (s:repeatCommand ==# a:command || a:command ==? 'Wholecword' && s:repeatCommand ==? 'cword')
 	let s:repeatStage += 1
 	return s:SearchElsewhere(s:repeatVerbose, a:line1, a:line2, a:pattern, a:isLiteral)
     else
@@ -729,6 +729,16 @@ function! SearchPosition#SetCword( isWholeWord )
     let l:cword = expand('<cword>')
     if ! empty(l:cword)
 	let s:pattern = ingo#regexp#FromLiteralText(l:cword, a:isWholeWord, '')
+    endif
+    return s:pattern
+endfunction
+function! SearchPosition#SetCWORD( isWholeWord )
+    let l:cWORD = expand('<cWORD>')
+    if ! empty(l:cWORD)
+	let s:pattern = ingo#regexp#EscapeLiteralText(l:cWORD, '')
+	if a:isWholeWord
+	    let s:pattern = ingo#regexp#MakeWholeWORDSearch(l:cWORD, s:pattern)
+	endif
     endif
     return s:pattern
 endfunction
