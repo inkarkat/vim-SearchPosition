@@ -140,7 +140,7 @@ command!       -range=% -nargs=? SearchPosition           if ! SearchPosition#Se
 command! -bang -range=% -nargs=? SearchPositionWithRepeat if ! SearchPosition#SearchPositionRepeat('Current', <bang>0, <line1>, <line2>, ingo#cmdargs#pattern#ParseUnescapedWithLiteralWholeWord(<q-args>), 0) | echoerr ingo#err#Get() | endif
 command!       -range=% -nargs=? SearchPositionMultiple   if ! SearchPosition#SearchPositionMultiple(                  <line1>, <line2>, <q-args>) | echoerr ingo#err#Get() | endif
 
-if v:version == 704 && has('patch530') || v:version > 704
+if v:version == 704 && has('patch542') || v:version > 704
 command! -addr=windows        -range=% -bang -nargs=? WinSearchPosition  if ! SearchPosition#Elsewhere#Windows(  <bang>0, <line1>, <line2>, -1, ingo#cmdargs#pattern#ParseUnescapedWithLiteralWholeWord(<q-args>), 0) | echoerr ingo#err#Get() | endif
 command! -addr=tabs           -range=% -bang -nargs=? TabSearchPosition  if ! SearchPosition#Elsewhere#Tabs(     <bang>0, <line1>, <line2>, -1, ingo#cmdargs#pattern#ParseUnescapedWithLiteralWholeWord(<q-args>), 0) | echoerr ingo#err#Get() | endif
 command! -addr=arguments      -range=% -bang -nargs=? ArgSearchPosition  if ! SearchPosition#Elsewhere#Arguments(<bang>0, <line1>, <line2>, -1, ingo#cmdargs#pattern#ParseUnescapedWithLiteralWholeWord(<q-args>), 0) | echoerr ingo#err#Get() | endif
