@@ -88,39 +88,39 @@ USAGE
                             buffer, not just a summary. If [range] is given only
                             covers those buffers.
 
-    <Leader><A-n>{motion}   Show position for the last search pattern in the
+    <Leader>ALT-n{motion}   Show position for the last search pattern in the
                             lines covered by {motion}.
-    [count]<A-n>            Show position for the last search pattern in the
+    [count]ALT-n            Show position for the last search pattern in the
                             entire buffer, or [count] following lines.
-    {Visual}<A-n>           Show position for the last search pattern in the
+    {Visual}ALT-n           Show position for the last search pattern in the
                             selected lines.
 
-                            The default mapping <A-n> was chosen because one often
-                            invokes this when jumping to matches via n/N, so <A-n>
+                            The default mapping ALT-n was chosen because one often
+                            invokes this when jumping to matches via n/N, so ALT-n
                             is easy to reach. Imagine 'n' stood for "next
                             searches".
 
-    [count]<A-m>            Show position for the whole word under the cursor in
+    [count]ALT-m            Show position for the whole word under the cursor in
                             the entire buffer, or [count] following lines.
                             Only whole keywords are searched for, like with the
                             star command.
-    [count]g<A-m>           Show position for the word under the cursor in the
+    [count]g_ALT-m          Show position for the word under the cursor in the
                             entire buffer, or [count] following lines.
                             Also finds contained matches, like gstar.
                             When repeated at the same position, switches to
                             verbose reporting, like g_ALT-N.
 
-    {Visual}<A-m>           Show position for the selected text in the entire
+    {Visual}ALT-m           Show position for the selected text in the entire
                             buffer.
 
                             Imagine 'm' stood for "more occurrences".
                             These mappings reuse the last used <cword> when issued
                             on a blank line.
 
-    [count],<A-m>           Show position for the whole (i.e. delimited by
+    [count],_ALT-m          Show position for the whole (i.e. delimited by
                             whitespace) WORD under the cursor in the entire
                             buffer, or [count] following lines.
-    [count]g,<A-m>          Show position for the WORD under the cursor in the
+    [count]g,_ALT-m         Show position for the WORD under the cursor in the
                             entire buffer, or [count] following lines.
                             Also finds contained matches, like gstar.
                             When repeated at the same position, switches to
@@ -138,11 +138,11 @@ USAGE
                             - loaded buffers (:BufSearchPosition)
                             skipping those sources that do not exist.
 
-    g<A-n>                  A repeat with a "g" prefix at the same position will
-    g<A-m>                  show a verbose report that shows match statistics
-    g,<A-m>                 about every covered buffer, not just a summary.
-                            g<A-n> can also be used anywhere to start a verbose
-                            report for all windows; g<A-m> / g,<A-m> cannot,
+    g_ALT-n                 A repeat with a "g" prefix at the same position will
+    g_ALT-m                 show a verbose report that shows match statistics
+    g_,ALT-m                about every covered buffer, not just a summary.
+                            g_ALT-n can also be used anywhere to start a verbose
+                            report for all windows; g_ALT-m / g,_ALT-m cannot,
                             because they are overloaded with showing the position
                             of the word / WORD under the cursor.
 
@@ -201,7 +201,7 @@ The relative threshold at the end is determined via:
     let g:SearchPosition_MatchRangeShowRelativeEndThreshold = 10
 
 If you want to use different mappings, map your keys to the
-<Plug>SearchPosition\* mapping targets _before_ sourcing the script (e.g. in
+&lt;Plug&gt;SearchPosition\* mapping targets _before_ sourcing the script (e.g. in
 your vimrc):
 
     nmap <Leader>,n <Plug>SearchPositionOperator
@@ -233,9 +233,9 @@ HISTORY
   and verbose search result reporting.
 - Add :WinSearchPosition, :TabSearchPosition, :ArgSearchPosition,
   :BufSearchPosition commands.
-- BUG: {Visual}<A-m> uses selected text as pattern, not as literal text. Add
+- BUG: {Visual}&lt;A-m&gt; uses selected text as pattern, not as literal text. Add
   escaping.
-- ENH: Add [g],<A-m> variants of [g]<A-m> that use (whole) WORD instead of
+- ENH: Add [g],&lt;A-m&gt; variants of [g]&lt;A-m&gt; that use (whole) WORD instead of
   word.
 
 __You need to update to ingo-library ([vimscript #4433](http://www.vim.org/scripts/script.php?script_id=4433)) version 1.036!__
@@ -266,7 +266,7 @@ __You need to update to ingo-library ([vimscript #4433](http://www.vim.org/scrip
   matches" when on first line. Must not allow previous matching line when that
   is identical to 0, the return value of search() when it fails.
 - BUG: "Special atoms have distorted the tally" when doing
-  :SearchPosition/\n\n/ on empty line. The special case for \n matching is
+  :SearchPosition/\\n\\n/ on empty line. The special case for \\n matching is
   actually more complex; need to also ensure that the match doesn't lie
   completely on the previous line, and retry without the "c" search flag if it
   does.
@@ -285,7 +285,7 @@ __You need to separately
   install ingo-library ([vimscript #4433](http://www.vim.org/scripts/script.php?script_id=4433)) version 1.020 (or higher)!__
 
 ##### 1.15    30-Sep-2011
-- Use <silent> for <Plug> mapping instead of default mapping.
+- Use &lt;silent&gt; for &lt;Plug&gt; mapping instead of default mapping.
 
 ##### 1.14    12-Sep-2011
 - Reuse: Use ingointegration#GetVisualSelection() instead of inline capture.
@@ -296,8 +296,8 @@ __You need to separately
   line.
 
 ##### 1.12    08-Oct-2010
-- BUG: Visual mode <A-m> /Plug>SearchPositionCword mapping on multi-line
-  selection searched for ^@, not the newline character \n.
+- BUG: Visual mode &lt;A-m&gt; /Plug&gt;SearchPositionCword mapping on multi-line
+  selection searched for ^@, not the newline character \\n.
 - BUG: Incorrect reporting of sole match in folded line when the current line
   is empty and the pattern starts matching a newline character.
 - Using SearchPosition#SavePosition() instead ofVim version-dependent) mark to
@@ -314,7 +314,7 @@ context.
 - BUG: Wrong reporting of additional occurrences when the current line is
   outside the passed range.
 - BUG: Catch non-existing items in evaluations that can be caused by e.g.
-  having \%# inside the search pattern. Warn about "special atoms have
+  having \\%# inside the search pattern. Warn about "special atoms have
   distorted the tally" in such cases.
 
 ##### 1.03    05-Jan-2010
@@ -323,7 +323,7 @@ search (which is now mapped to g\_ALT-M), like the star and gstar commands.
 
 ##### 1.02    11-Sep-2009
 - BUG: Cannot set mark " in Vim 7.0 and 7.1; using mark z instead. This only
-affected the <Leader><A-n>{motion} command.
+affected the &lt;Leader&gt;&lt;A-n&gt;{motion} command.
 
 ##### 1.01    19-Jun-2009
 - The jumplist is not clobbered anymore by the :SearchPosition command.
@@ -338,4 +338,4 @@ affected the <Leader><A-n>{motion} command.
 Copyright: (C) 2009-2019 Ingo Karkat -
 The [VIM LICENSE](http://vimdoc.sourceforge.net/htmldoc/uganda.html#license) applies to this plugin.
 
-Maintainer:     Ingo Karkat <ingo@karkat.de>
+Maintainer:     Ingo Karkat &lt;ingo@karkat.de&gt;

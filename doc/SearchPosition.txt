@@ -96,29 +96,29 @@ USAGE							*SearchPosition-usage*
 
 						     *SearchPosition-mappings*
 							     *ALT-N* *v_ALT-N*
-<Leader><A-n>{motion}	Show position for the last search pattern in the
+<Leader>ALT-n{motion}	Show position for the last search pattern in the
 			lines covered by {motion}.
-[count]<A-n>		Show position for the last search pattern in the
+[count]ALT-n		Show position for the last search pattern in the
 			entire buffer, or [count] following lines.
-{Visual}<A-n>		Show position for the last search pattern in the
+{Visual}ALT-n		Show position for the last search pattern in the
 			selected lines.
 
-			The default mapping <A-n> was chosen because one often
-			invokes this when jumping to matches via n/N, so <A-n>
+			The default mapping ALT-n was chosen because one often
+			invokes this when jumping to matches via n/N, so ALT-n
 			is easy to reach. Imagine 'n' stood for "next
 			searches".
 						   *ALT-M* *g_ALT-M* *v_ALT-M*
-[count]<A-m>		Show position for the whole word under the cursor in
+[count]ALT-m		Show position for the whole word under the cursor in
 			the entire buffer, or [count] following lines.
 			Only whole keywords are searched for, like with the
 			|star| command.
-[count]g<A-m>		Show position for the word under the cursor in the
+[count]g_ALT-m		Show position for the word under the cursor in the
 			entire buffer, or [count] following lines.
 			Also finds contained matches, like |gstar|.
 			When repeated at the same position, switches to
 			verbose reporting, like |g_ALT-N|.
 
-{Visual}<A-m>		Show position for the selected text in the entire
+{Visual}ALT-m		Show position for the selected text in the entire
 			buffer.
 
 			Imagine 'm' stood for "more occurrences".
@@ -126,10 +126,10 @@ USAGE							*SearchPosition-usage*
 			on a blank line.
 
 							   *,ALT-M* *g,_ALT-M*
-[count],<A-m>		Show position for the whole (i.e. delimited by
+[count],_ALT-m		Show position for the whole (i.e. delimited by
 			whitespace) WORD under the cursor in the entire
 			buffer, or [count] following lines.
-[count]g,<A-m>		Show position for the WORD under the cursor in the
+[count]g,_ALT-m		Show position for the WORD under the cursor in the
 			entire buffer, or [count] following lines.
 			Also finds contained matches, like |gstar|.
 			When repeated at the same position, switches to
@@ -148,11 +148,11 @@ USAGE							*SearchPosition-usage*
 			- loaded buffers (|:BufSearchPosition|)
 			skipping those sources that do not exist.
 								     *g_ALT-N*
-g<A-n>			A repeat with a "g" prefix at the same position will
-g<A-m>			show a verbose report that shows match statistics
-g,<A-m>			about every covered buffer, not just a summary.
-			g<A-n> can also be used anywhere to start a verbose
-			report for all windows; g<A-m> / g,<A-m> cannot,
+g_ALT-n			A repeat with a "g" prefix at the same position will
+g_ALT-m			show a verbose report that shows match statistics
+g_,ALT-m		about every covered buffer, not just a summary.
+			g_ALT-n can also be used anywhere to start a verbose
+			report for all windows; g_ALT-m / g,_ALT-m cannot,
 			because they are overloaded with showing the position
 			of the word / WORD under the cursor.
 
