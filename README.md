@@ -228,7 +228,7 @@ below).
 HISTORY
 ------------------------------------------------------------------------------
 
-##### 2.00    RELEASEME
+##### 2.00    03-Apr-2020
 - ENH: Add widening of search scope on mapping repeat at the same position,
   and verbose search result reporting.
 - Add :WinSearchPosition, :TabSearchPosition, :ArgSearchPosition,
@@ -335,7 +335,7 @@ affected the &lt;Leader&gt;&lt;A-n&gt;{motion} command.
 - Started development.
 
 ------------------------------------------------------------------------------
-Copyright: (C) 2009-2019 Ingo Karkat -
+Copyright: (C) 2009-2020 Ingo Karkat -
 The [VIM LICENSE](http://vimdoc.sourceforge.net/htmldoc/uganda.html#license) applies to this plugin.
 
 Maintainer:     Ingo Karkat &lt;ingo@karkat.de&gt;

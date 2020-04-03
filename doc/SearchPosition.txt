@@ -240,7 +240,7 @@ below).
 ==============================================================================
 HISTORY						      *SearchPosition-history*
 
-2.00	RELEASEME
+2.00	03-Apr-2020
 - ENH: Add widening of search scope on mapping repeat at the same position,
   and verbose search result reporting.
 - Add :WinSearchPosition, :TabSearchPosition, :ArgSearchPosition,
@@ -343,7 +343,7 @@ First published version.
 Started development.
 
 ==============================================================================
-Copyright: (C) 2009-2019 Ingo Karkat
+Copyright: (C) 2009-2020 Ingo Karkat
 The VIM LICENSE applies to this plugin; see |copyright|.
 
 Maintainer:	Ingo Karkat <ingo@karkat.de>
