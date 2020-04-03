@@ -1,44 +1,12 @@
 " SearchPosition/Elsewhere.vim: Show number of search pattern matches in other buffers.
 "
 " DEPENDENCIES:
-"   - ingo/actions/iterations.vim autoload script
-"   - ingo/actions/special.vim autoload script
-"   - ingo/collections.vim autoload script
-"   - ingo/err.vim autoload script
-"   - ingo/window/dimensions.vim autoload script
-"   - SearchPosition.vim autoload script
+"   - ingo-library.vim plugin
 "
-" Copyright: (C) 2015-2016 Ingo Karkat
+" Copyright: (C) 2015-2020 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
-"
-" REVISION	DATE		REMARKS
-"   2.00.004	29-Jul-2016	Refactor SearchPosition#Elsewhere#Windows();
-"				break out the window iteration into
-"				ingo#actions#iterations#WinDo().
-"				Implement tabpage search.
-"   2.00.003	28-Jul-2016	Move SearchPosition#Windows() to
-"				SearchPosition#Elsewhere#Windows(). Add
-"				a:skipWinNr argument.
-"				Add a:searchResult.bufNr directly in
-"				SearchPosition#Elsewhere#Count().
-"				a:uniqueBufferNum is redundant, remove it.
-"				Return additional a:isMatches from
-"				SearchPosition#Elsewhere#Evaluate[One](). Use
-"				that to turn off highlighting when there are no
-"				matches.
-"				Reimplement SearchPosition#Elsewhere#Count()
-"				with :%s///gn by delegating to
-"				SearchPosition#GetMatchesStats().
-"   1.50.002	22-Jul-2016	Pass a:uniqueMatches to
-"				SearchPosition#Elsewhere#Count() to also tally
-"				unique matches across invocations.
-"				Return buffer information along with the search
-"				matches, too.
-"				Start implementing
-"				SearchPosition#Elsewhere#Evaluate().
-"   1.50.001	23-Apr-2015	file creation
 let s:save_cpo = &cpo
 set cpo&vim
 
