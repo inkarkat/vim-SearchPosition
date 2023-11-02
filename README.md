@@ -234,6 +234,9 @@ below).
 HISTORY
 ------------------------------------------------------------------------------
 
+##### 2.01    RELEASEME
+- Don't repeat search if the search pattern has changed in the meantime.
+
 ##### 2.00    03-Apr-2020
 - ENH: Add widening of search scope on mapping repeat at the same position,
   and verbose search result reporting.
