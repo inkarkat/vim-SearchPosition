@@ -35,7 +35,13 @@ prints the number of matches for the last search pattern. This plugin
 builds on top of this by providing more context with regards to the current
 cursor position plus additional information.
 
-This plugin is similar to IndexedSearch.vim ([vimscript #1682](http://www.vim.org/scripts/script.php?script_id=1682)) by Yakov Lerner.
+### RELATED WORKS
+
+- This plugin is similar to IndexedSearch.vim ([vimscript #1682](http://www.vim.org/scripts/script.php?script_id=1682)) by Yakov
+  Lerner.
+- vim-searchindex (https://github.com/google/vim-searchindex) hooks into the
+  built-in search commands and also provides a separate g/ mapping to show the
+  index of the current search and total counts.
 
 USAGE
 ------------------------------------------------------------------------------
@@ -228,6 +234,9 @@ below).
 HISTORY
 ------------------------------------------------------------------------------
 
+##### 2.01    14-Nov-2024
+- Don't repeat search if the search pattern has changed in the meantime.
+
 ##### 2.00    03-Apr-2020
 - ENH: Add widening of search scope on mapping repeat at the same position,
   and verbose search result reporting.
@@ -335,7 +344,7 @@ affected the &lt;Leader&gt;&lt;A-n&gt;{motion} command.
 - Started development.
 
 ------------------------------------------------------------------------------
-Copyright: (C) 2009-2020 Ingo Karkat -
+Copyright: (C) 2009-2024 Ingo Karkat -
 The [VIM LICENSE](http://vimdoc.sourceforge.net/htmldoc/uganda.html#license) applies to this plugin.
 
 Maintainer:     Ingo Karkat &lt;ingo@karkat.de&gt;

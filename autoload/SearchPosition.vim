@@ -3,7 +3,7 @@
 " DEPENDENCIES:
 "   - ingo-library.vim plugin
 "
-" Copyright: (C) 2008-2020 Ingo Karkat
+" Copyright: (C) 2008-2023 Ingo Karkat
 "   The VIM LICENSE applies to this script; see ':help copyright'.
 "
 " Maintainer:	Ingo Karkat <ingo@karkat.de>
@@ -462,7 +462,7 @@ let s:repeatCommand = ''
 let s:repeatStage = 0
 let s:repeatVerbose = 0
 function! SearchPosition#SearchPositionRepeat( command, isVerbose, line1, line2, pattern, isLiteral )
-    let l:newRecord = ingo#record#PositionAndLocation(0)
+    let l:newRecord = add(ingo#record#PositionAndLocation(0), empty(a:pattern) ? @/ : a:pattern)
     if a:isVerbose || a:command ==? 'cword' && s:record == l:newRecord && s:repeatCommand =~? '^\%(Whole\)\?cword$' " g<A-m> / g<A-w> on first use trigger cword/cWORD search, on repeat then switch to verbose reporting.
 	if s:record == l:newRecord && (s:repeatCommand ==# a:command || s:repeatCommand =~? '^\%(Whole\)\?cword$')
 	    let s:repeatStage += 1  " Verbose repeats just the same.
