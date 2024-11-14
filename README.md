@@ -234,7 +234,7 @@ below).
 HISTORY
 ------------------------------------------------------------------------------
 
-##### 2.01    RELEASEME
+##### 2.01    14-Nov-2024
 - Don't repeat search if the search pattern has changed in the meantime.
 
 ##### 2.00    03-Apr-2020
@@ -344,7 +344,7 @@ affected the &lt;Leader&gt;&lt;A-n&gt;{motion} command.
 - Started development.
 
 ------------------------------------------------------------------------------
-Copyright: (C) 2009-2023 Ingo Karkat -
+Copyright: (C) 2009-2024 Ingo Karkat -
 The [VIM LICENSE](http://vimdoc.sourceforge.net/htmldoc/uganda.html#license) applies to this plugin.
 
 Maintainer:     Ingo Karkat &lt;ingo@karkat.de&gt;
